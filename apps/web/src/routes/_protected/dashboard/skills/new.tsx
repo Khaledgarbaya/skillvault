@@ -2,13 +2,12 @@ import { useState, useCallback, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { validateVersion } from "@skvault/shared";
+import { Upload, Check } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
-import { Progress } from "~/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { ScanReport } from "~/components/scan-report";
 import {
@@ -104,7 +103,6 @@ function PublishSkill() {
 
     setPublishing(true);
     try {
-      // Step 1: Create skill
       const { skillId } = await publishSkillAction({
         data: {
           name,
@@ -113,7 +111,6 @@ function PublishSkill() {
         },
       });
 
-      // Step 2: Upload version (base64-encode the tarball)
       const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       let binary = "";
@@ -155,8 +152,11 @@ function PublishSkill() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Publish New Skill</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mb-1 font-mono text-xs uppercase tracking-widest text-primary">
+          Publish
+        </p>
+        <h1 className="text-2xl font-bold tracking-tight">Publish New Skill</h1>
+        <p className="mt-1 text-[13px] text-muted-foreground">
           Create and publish a skill to the registry.
         </p>
       </div>
@@ -166,25 +166,25 @@ function PublishSkill() {
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             <div
-              className={`flex size-7 items-center justify-center rounded-full text-xs font-medium ${
+              className={`flex size-7 items-center justify-center rounded-full font-mono text-xs font-medium transition-colors ${
                 i === step
                   ? "bg-primary text-primary-foreground"
                   : i < step
                     ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted/50 text-muted-foreground/50"
               }`}
             >
-              {i + 1}
+              {i < step ? <Check className="size-3.5" /> : i + 1}
             </div>
             <span
-              className={`text-sm ${
-                i === step ? "text-foreground" : "text-muted-foreground"
+              className={`text-[13px] ${
+                i === step ? "text-foreground" : "text-muted-foreground/50"
               }`}
             >
               {s}
             </span>
             {i < STEPS.length - 1 && (
-              <div className="mx-2 h-px w-8 bg-border/50" />
+              <div className={`mx-2 h-px w-8 ${i < step ? "bg-primary/30" : "bg-border/50"}`} />
             )}
           </div>
         ))}
@@ -192,25 +192,23 @@ function PublishSkill() {
 
       {/* Step 1: Details */}
       {step === 0 && (
-        <Card className="border-border/50 bg-card/30">
-          <CardHeader>
-            <CardTitle className="text-base">Skill Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <h2 className="mb-4 text-[13px] font-medium">Skill Details</h2>
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Skill Name</Label>
+              <Label htmlFor="name" className="text-[13px]">Skill Name</Label>
               <Input
                 id="name"
                 placeholder="my-awesome-skill"
                 value={name}
                 onChange={(e) => validateName(e.target.value)}
-                className={
+                className={`font-mono ${
                   nameError
                     ? "border-destructive"
                     : nameValid
                       ? "border-primary/50"
                       : ""
-                }
+                }`}
               />
               {nameError && (
                 <p className="text-xs text-destructive">{nameError}</p>
@@ -218,12 +216,12 @@ function PublishSkill() {
               {nameValid && (
                 <p className="text-xs text-primary">Name is available</p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground/70">
                 Lowercase letters, numbers, and hyphens only. 3-50 characters.
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-[13px]">Description</Label>
               <Textarea
                 id="description"
                 placeholder="What does this skill do?"
@@ -238,34 +236,32 @@ function PublishSkill() {
                 checked={isPublic}
                 onCheckedChange={setIsPublic}
               />
-              <Label htmlFor="visibility" className="cursor-pointer">
+              <Label htmlFor="visibility" className="cursor-pointer text-[13px]">
                 {isPublic ? "Public" : "Private"}
               </Label>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground/70">
                 {isPublic
                   ? "Visible on explore page"
                   : "Only accessible with API token"}
               </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Step 2: Upload */}
       {step === 1 && (
-        <Card className="border-border/50 bg-card/30">
-          <CardHeader>
-            <CardTitle className="text-base">Upload Package</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <h2 className="mb-4 text-[13px] font-medium">Upload Package</h2>
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="version">Version</Label>
+              <Label htmlFor="version" className="text-[13px]">Version</Label>
               <Input
                 id="version"
                 placeholder="1.0.0"
                 value={version}
                 onChange={(e) => validateVer(e.target.value)}
-                className={versionError ? "border-destructive" : ""}
+                className={`font-mono ${versionError ? "border-destructive" : ""}`}
               />
               {versionError && (
                 <p className="text-xs text-destructive">{versionError}</p>
@@ -273,17 +269,20 @@ function PublishSkill() {
             </div>
 
             <div className="space-y-2">
-              <Label>Tarball (.tar.gz)</Label>
+              <Label className="text-[13px]">Tarball (.tar.gz)</Label>
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleFileDrop}
-                className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border/50 bg-card/10 px-6 py-10 text-center transition-colors hover:border-primary/30"
+                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border/50 bg-muted/10 px-6 py-10 text-center transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.02]"
                 onClick={() =>
                   document.getElementById("file-input")?.click()
                 }
               >
                 {file ? (
                   <>
+                    <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                      <Check className="size-4 text-primary" />
+                    </div>
                     <Badge variant="outline" className="font-mono text-xs">
                       {file.name}
                     </Badge>
@@ -293,7 +292,10 @@ function PublishSkill() {
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground">
+                    <div className="flex size-10 items-center justify-center rounded-full border border-border/50 bg-muted/30">
+                      <Upload className="size-4 text-muted-foreground/50" />
+                    </div>
+                    <p className="text-[13px] text-muted-foreground">
                       Drop your .tar.gz here or click to browse
                     </p>
                     <p className="text-xs text-muted-foreground/50">
@@ -310,8 +312,8 @@ function PublishSkill() {
                 className="hidden"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Step 3: Review */}
@@ -319,66 +321,62 @@ function PublishSkill() {
         <div className="space-y-4">
           {publishResult ? (
             <>
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-primary" />
-                    <span className="text-sm font-medium">
-                      Published successfully
-                    </span>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-6 items-center justify-center rounded-full bg-primary/20">
+                    <Check className="size-3.5 text-primary" />
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Your skill <span className="font-mono">{name}@{version}</span> is now live.
-                  </p>
-                </CardContent>
-              </Card>
+                  <span className="text-[13px] font-medium">
+                    Published successfully
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Your skill <span className="font-mono text-primary">{name}@{version}</span> is now live.
+                </p>
+              </div>
               <Button onClick={() => navigate({ to: "/dashboard/skills/$name", params: { name } })}>
                 View Skill Settings
               </Button>
             </>
           ) : (
-            <Card className="border-border/50 bg-card/30">
-              <CardHeader>
-                <CardTitle className="text-base">Review & Publish</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid gap-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Name</span>
-                    <span className="font-mono">{name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Version</span>
-                    <span className="font-mono">{version}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Visibility</span>
-                    <Badge
-                      variant="outline"
-                      className={`h-5 text-[10px] ${isPublic ? "border-primary/30 text-primary" : ""}`}
-                    >
-                      {isPublic ? "public" : "private"}
-                    </Badge>
-                  </div>
-                  {file && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Package</span>
-                      <span className="font-mono text-xs">
-                        {file.name} ({formatBytes(file.size)})
-                      </span>
-                    </div>
-                  )}
-                  {description && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Description</span>
-                      <span className="max-w-[60%] truncate text-right">
-                        {description}
-                      </span>
-                    </div>
-                  )}
+            <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+              <h2 className="mb-4 text-[13px] font-medium">Review & Publish</h2>
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-muted-foreground">Name</span>
+                  <span className="font-mono">{name}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-muted-foreground">Version</span>
+                  <span className="font-mono">{version}</span>
+                </div>
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-muted-foreground">Visibility</span>
+                  <Badge
+                    variant="outline"
+                    className={`h-5 text-[10px] ${isPublic ? "border-primary/30 text-primary" : ""}`}
+                  >
+                    {isPublic ? "public" : "private"}
+                  </Badge>
+                </div>
+                {file && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-muted-foreground">Package</span>
+                    <span className="font-mono text-xs">
+                      {file.name} ({formatBytes(file.size)})
+                    </span>
+                  </div>
+                )}
+                {description && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-muted-foreground">Description</span>
+                    <span className="max-w-[60%] truncate text-right">
+                      {description}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

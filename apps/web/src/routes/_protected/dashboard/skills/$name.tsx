@@ -7,7 +7,6 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ScanStatusDot } from "~/components/scan-status-dot";
 import {
   Table,
@@ -41,7 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Layers, AlertTriangle } from "lucide-react";
 import { formatRelativeTime } from "~/lib/format";
 import {
   fetchSkillSettings,
@@ -60,7 +59,6 @@ function SkillSettings() {
   const { skill, ownerUsername, versions } = Route.useLoaderData();
   const navigate = useNavigate();
 
-  // Edit form
   const [description, setDescription] = useState(skill.description ?? "");
   const [repositoryUrl, setRepositoryUrl] = useState(
     skill.repositoryUrl ?? "",
@@ -68,7 +66,6 @@ function SkillSettings() {
   const [isPublic, setIsPublic] = useState(skill.visibility === "public");
   const [saving, setSaving] = useState(false);
 
-  // Version action dialog
   const [versionAction, setVersionAction] = useState<{
     versionId: string;
     version: string;
@@ -77,7 +74,6 @@ function SkillSettings() {
   const [actionMessage, setActionMessage] = useState("");
   const [actionSaving, setActionSaving] = useState(false);
 
-  // Delete dialog
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -118,7 +114,6 @@ function SkillSettings() {
       );
       setVersionAction(null);
       setActionMessage("");
-      // Reload
       navigate({ to: "/dashboard/skills/$name", params: { name: skill.name } });
     } catch (err) {
       toast.error(
@@ -153,22 +148,23 @@ function SkillSettings() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-mono text-xl font-bold">
+        <p className="mb-1 font-mono text-xs uppercase tracking-widest text-primary">
+          Skill Settings
+        </p>
+        <h1 className="font-mono text-xl font-bold tracking-tight">
           {ownerUsername}/{skill.name}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-[13px] text-muted-foreground">
           Manage settings for this skill.
         </p>
       </div>
 
       {/* Edit form */}
-      <Card className="border-border/50 bg-card/30">
-        <CardHeader>
-          <CardTitle className="text-base">Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+        <h2 className="mb-4 text-[13px] font-medium">Settings</h2>
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-[13px]">Description</Label>
             <Textarea
               id="description"
               value={description}
@@ -177,7 +173,7 @@ function SkillSettings() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="repo-url">Repository URL</Label>
+            <Label htmlFor="repo-url" className="text-[13px]">Repository URL</Label>
             <Input
               id="repo-url"
               placeholder="https://github.com/..."
@@ -191,135 +187,139 @@ function SkillSettings() {
               checked={isPublic}
               onCheckedChange={setIsPublic}
             />
-            <Label htmlFor="visibility" className="cursor-pointer">
+            <Label htmlFor="visibility" className="cursor-pointer text-[13px]">
               {isPublic ? "Public" : "Private"}
             </Label>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? "Saving..." : "Save Changes"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Versions table */}
-      <Card className="border-border/50 bg-card/30">
-        <CardHeader>
-          <CardTitle className="text-base">Versions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {versions.length === 0 ? (
-            <p className="text-sm text-muted-foreground/50">
+      <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Layers className="size-4 text-primary" />
+          <h2 className="text-[13px] font-medium">Versions</h2>
+        </div>
+        {versions.length === 0 ? (
+          <div className="flex flex-col items-center py-6">
+            <div className="mb-3 flex size-10 items-center justify-center rounded-full border border-border/50 bg-muted/30">
+              <Layers className="size-4 text-muted-foreground/50" />
+            </div>
+            <p className="text-[13px] text-muted-foreground/50">
               No versions published yet.
             </p>
-          ) : (
-            <div className="rounded-lg border border-border/50">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead>Version</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Scan</TableHead>
-                    <TableHead>Published</TableHead>
-                    <TableHead className="w-10" />
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border/50">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">Version</TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">Status</TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">Scan</TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">Published</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {versions.map((v) => (
+                  <TableRow key={v.id} className="border-border/50">
+                    <TableCell className="font-mono text-[13px]">
+                      {v.version}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={statusBadge[v.status]}
+                        className="h-5 text-[10px]"
+                      >
+                        {v.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <ScanStatusDot
+                        status={
+                          v.scan?.overallStatus as
+                            | "pass"
+                            | "warn"
+                            | "fail"
+                            | null
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatRelativeTime(v.createdAt)}
+                    </TableCell>
+                    <TableCell>
+                      {v.status === "active" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setVersionAction({
+                                  versionId: v.id,
+                                  version: v.version,
+                                  status: "deprecated",
+                                })
+                              }
+                            >
+                              Deprecate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() =>
+                                setVersionAction({
+                                  versionId: v.id,
+                                  version: v.version,
+                                  status: "yanked",
+                                })
+                              }
+                            >
+                              Yank
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {versions.map((v) => (
-                    <TableRow key={v.id} className="border-border/50">
-                      <TableCell className="font-mono text-sm">
-                        {v.version}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={statusBadge[v.status]}
-                          className="h-5 text-[10px]"
-                        >
-                          {v.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <ScanStatusDot
-                          status={
-                            v.scan?.overallStatus as
-                              | "pass"
-                              | "warn"
-                              | "fail"
-                              | null
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatRelativeTime(v.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        {v.status === "active" && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                              >
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  setVersionAction({
-                                    versionId: v.id,
-                                    version: v.version,
-                                    status: "deprecated",
-                                  })
-                                }
-                              >
-                                Deprecate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() =>
-                                  setVersionAction({
-                                    versionId: v.id,
-                                    version: v.version,
-                                    status: "yanked",
-                                  })
-                                }
-                              >
-                                Yank
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       {/* Danger zone */}
-      <Card className="border-destructive/20">
-        <CardHeader>
-          <CardTitle className="text-base text-destructive">
+      <div className="rounded-xl border border-destructive/20 bg-destructive/[0.03] p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <AlertTriangle className="size-4 text-destructive" />
+          <h2 className="text-[13px] font-medium text-destructive">
             Danger Zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Permanently delete this skill and all its versions. This action
-            cannot be undone.
-          </p>
-          <Button
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            Delete Skill
-          </Button>
-        </CardContent>
-      </Card>
+          </h2>
+        </div>
+        <p className="mb-4 text-[13px] text-muted-foreground">
+          Permanently delete this skill and all its versions. This action
+          cannot be undone.
+        </p>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => setDeleteOpen(true)}
+        >
+          Delete Skill
+        </Button>
+      </div>
 
       {/* Version action dialog */}
       <Dialog
@@ -341,7 +341,7 @@ function SkillSettings() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="action-message">
+            <Label htmlFor="action-message" className="text-[13px]">
               {versionAction?.status === "deprecated"
                 ? "Deprecation message (optional)"
                 : "Reason (optional)"}
