@@ -8,6 +8,7 @@ import {
 import appCss from "../styles/app.css?url";
 import { SiteHeader } from "~/components/site-header";
 import { SiteFooter } from "~/components/site-footer";
+import { Toaster } from "~/components/ui/sonner";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -54,6 +55,7 @@ function RootLayout() {
           <Outlet />
         </main>
         {!isDashboard && <SiteFooter />}
+        <Toaster />
         <Scripts />
       </body>
     </html>
