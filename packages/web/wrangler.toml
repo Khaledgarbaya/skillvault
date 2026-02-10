@@ -1,0 +1,21 @@
+name = "skvault-web"
+compatibility_date = "2025-09-02"
+compatibility_flags = ["nodejs_compat"]
+main = "@tanstack/react-start/server-entry"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "skvault-db"
+database_id = "placeholder-replace-with-real-id"
+migrations_dir = "./drizzle"
+
+[[r2_buckets]]
+binding = "SKILLS_BUCKET"
+bucket_name = "skvault-skills"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "placeholder-replace-with-real-id"
+
+[vars]
+APP_URL = "http://localhost:3000"
