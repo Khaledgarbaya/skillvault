@@ -4,9 +4,23 @@ export interface User {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
-  githubId: string;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Session {
+  session: {
+    id: string;
+    userId: string;
+    token: string;
+    expiresAt: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  user: User;
 }
 
 export interface Skill {
