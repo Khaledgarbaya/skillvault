@@ -1,0 +1,28 @@
+{
+  "name": "skvault",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:shared": "pnpm --filter @skvault/shared build",
+    "build:web": "pnpm --filter @skvault/web build",
+    "build:cli": "pnpm --filter skvault build",
+    "build": "pnpm build:shared && pnpm build:web && pnpm build:cli",
+    "dev": "pnpm --filter @skvault/web dev",
+    "dev:cli": "pnpm --filter skvault dev",
+    "dev:wrangler": "pnpm --filter @skvault/web exec wrangler dev",
+    "test": "echo \"No tests configured yet\"",
+    "db:generate": "pnpm --filter @skvault/web db:generate",
+    "db:migrate": "pnpm --filter @skvault/web db:migrate"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "prettier": "^3.4.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  }
+}
