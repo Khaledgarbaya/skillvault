@@ -17,5 +17,9 @@ bucket_name = "skvault-skills"
 binding = "CACHE"
 id = "59fc0ff98a974dd388dd93269f4db115"
 
+[[routes]]
+pattern = "skvault.dev"
+custom_domain = true
+
 [vars]
-APP_URL = "https://skvault-web.kgarbaya4775.workers.dev"
+APP_URL = "https://skvault.dev"
