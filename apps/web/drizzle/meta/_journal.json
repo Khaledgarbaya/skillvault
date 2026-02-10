@@ -8,6 +8,13 @@
       "when": 1770749207385,
       "tag": "0000_outstanding_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770835607385,
+      "tag": "0001_add_auth_tables",
+      "breakpoints": true
     }
   ]
 }
