@@ -10,4 +10,3 @@ dist/
 .turbo/
 .vinxi/
 .output/
-drizzle/*.sql
