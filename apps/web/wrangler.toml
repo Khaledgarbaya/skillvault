@@ -6,7 +6,7 @@ main = "@tanstack/react-start/server-entry"
 [[d1_databases]]
 binding = "DB"
 database_name = "skvault-db"
-database_id = "placeholder-replace-with-real-id"
+database_id = "fb639fe7-fa5a-4196-bfb7-029e80640a73"
 migrations_dir = "./drizzle"
 
 [[r2_buckets]]
@@ -15,7 +15,7 @@ bucket_name = "skvault-skills"
 
 [[kv_namespaces]]
 binding = "CACHE"
-id = "placeholder-replace-with-real-id"
+id = "59fc0ff98a974dd388dd93269f4db115"
 
 [vars]
 APP_URL = "http://localhost:3000"
