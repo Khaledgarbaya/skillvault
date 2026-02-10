@@ -15,6 +15,19 @@ export async function sendEmail(
   { to, subject, html, idempotencyKey }: SendEmailOptions,
   apiKey: string,
 ) {
+  if (!apiKey || apiKey === "placeholder") {
+    console.log("\n┌──────────────────────────────────────────");
+    console.log("│ EMAIL (console mode — no RESEND_API_KEY)");
+    console.log("├──────────────────────────────────────────");
+    console.log(`│ To:      ${to}`);
+    console.log(`│ Subject: ${subject}`);
+    console.log("│ HTML:    (below)");
+    console.log("├──────────────────────────────────────────");
+    console.log(html);
+    console.log("└──────────────────────────────────────────\n");
+    return { id: "console-dev-mode" };
+  }
+
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
