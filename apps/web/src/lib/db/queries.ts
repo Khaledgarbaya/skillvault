@@ -1,4 +1,4 @@
-import { eq, and, like, or, desc, sql } from "drizzle-orm";
+import { eq, and, like, or, desc, sql, inArray, count } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { skills, skillVersions, scanResults, installEvents, users } from "./schema";
 
@@ -182,4 +182,84 @@ export async function recordInstallEvent(
     agentType: data.agentType,
     createdAt: new Date(),
   });
+}
+
+export async function countPublicSkills(
+  db: DrizzleD1Database,
+  opts: { q?: string },
+) {
+  const conditions = [eq(skills.visibility, "public")];
+  if (opts.q) {
+    const pattern = `%${opts.q}%`;
+    conditions.push(or(like(skills.name, pattern), like(skills.description, pattern))!);
+  }
+  const rows = await db
+    .select({ total: count() })
+    .from(skills)
+    .where(and(...conditions));
+  return rows[0]?.total ?? 0;
+}
+
+export async function listPublicSkillsWithDetails(
+  db: DrizzleD1Database,
+  opts: { q?: string; sort?: string; page?: number; limit?: number },
+) {
+  const { items, page, limit } = await listPublicSkills(db, opts);
+  if (items.length === 0) {
+    const total = await countPublicSkills(db, { q: opts.q });
+    return { items: [] as typeof enriched, page, limit, total };
+  }
+
+  const skillIds = items.map((r) => r.skill.id);
+
+  // Fetch all active versions for these skills
+  const versions = await db
+    .select()
+    .from(skillVersions)
+    .where(
+      and(
+        inArray(skillVersions.skillId, skillIds),
+        eq(skillVersions.status, "active"),
+      ),
+    )
+    .orderBy(
+      desc(skillVersions.versionMajor),
+      desc(skillVersions.versionMinor),
+      desc(skillVersions.versionPatch),
+    );
+
+  // Pick latest version per skill
+  const latestBySkill = new Map<string, typeof versions[0]>();
+  for (const v of versions) {
+    if (!latestBySkill.has(v.skillId)) {
+      latestBySkill.set(v.skillId, v);
+    }
+  }
+
+  // Fetch scans for the latest versions
+  const versionIds = [...latestBySkill.values()].map((v) => v.id);
+  const scans =
+    versionIds.length > 0
+      ? await db
+          .select()
+          .from(scanResults)
+          .where(inArray(scanResults.skillVersionId, versionIds))
+      : [];
+
+  const scanByVersion = new Map<string, typeof scans[0]>();
+  for (const s of scans) {
+    const existing = scanByVersion.get(s.skillVersionId);
+    if (!existing || s.createdAt > existing.createdAt) {
+      scanByVersion.set(s.skillVersionId, s);
+    }
+  }
+
+  const enriched = items.map((row) => {
+    const latestVersion = latestBySkill.get(row.skill.id) ?? null;
+    const scan = latestVersion ? scanByVersion.get(latestVersion.id) ?? null : null;
+    return { ...row, latestVersion, scan };
+  });
+
+  const total = await countPublicSkills(db, { q: opts.q });
+  return { items: enriched, page, limit, total };
 }
