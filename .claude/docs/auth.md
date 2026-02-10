@@ -44,12 +44,18 @@ All protected routes nest under `_protected/`.
 
 ```
 src/routes/
-├── __root.tsx              # Root layout
+├── __root.tsx              # Root layout (includes <Toaster />)
 ├── _protected.tsx          # Auth guard (redirects to /login)
 ├── _protected/
-│   ├── dashboard.tsx       # Dashboard layout (nav bar, outlet)
+│   ├── dashboard.tsx       # Dashboard layout (sidebar + topbar + outlet)
 │   └── dashboard/
-│       └── index.tsx       # Dashboard home page
+│       ├── index.tsx       # Overview — stats, activity, recent skills
+│       ├── skills/
+│       │   ├── index.tsx   # Skills list table
+│       │   ├── new.tsx     # Publish wizard (3-step)
+│       │   └── $name.tsx   # Skill settings (edit, versions, delete)
+│       ├── tokens.tsx      # API token management
+│       └── settings.tsx    # Profile + password
 ├── login.tsx               # Public
 ├── register.tsx            # Public
 ├── forgot-password.tsx     # Public
