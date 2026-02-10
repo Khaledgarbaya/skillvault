@@ -1,6 +1,6 @@
 import { eq, and, like, or, desc, sql, inArray, count } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { skills, skillVersions, scanResults, installEvents, users } from "./schema";
+import { skills, skillVersions, scanResults, installEvents, users, apiTokens } from "./schema";
 
 export async function getSkillByOwnerAndName(
   db: DrizzleD1Database,
@@ -199,6 +199,142 @@ export async function countPublicSkills(
     .where(and(...conditions));
   return rows[0]?.total ?? 0;
 }
+
+// ─── Dashboard queries ─────────────────────────────────────────────
+
+export async function listUserSkills(db: DrizzleD1Database, userId: string) {
+  const userSkills = await db
+    .select({ skill: skills, ownerUsername: users.username })
+    .from(skills)
+    .innerJoin(users, eq(users.id, skills.ownerId))
+    .where(eq(skills.ownerId, userId))
+    .orderBy(desc(skills.updatedAt));
+
+  if (userSkills.length === 0) return [];
+
+  const skillIds = userSkills.map((r) => r.skill.id);
+
+  // Get all versions for these skills
+  const versions = await db
+    .select()
+    .from(skillVersions)
+    .where(inArray(skillVersions.skillId, skillIds))
+    .orderBy(
+      desc(skillVersions.versionMajor),
+      desc(skillVersions.versionMinor),
+      desc(skillVersions.versionPatch),
+    );
+
+  const latestBySkill = new Map<string, typeof versions[0]>();
+  for (const v of versions) {
+    if (!latestBySkill.has(v.skillId)) {
+      latestBySkill.set(v.skillId, v);
+    }
+  }
+
+  // Fetch scans for latest versions
+  const versionIds = [...latestBySkill.values()].map((v) => v.id);
+  const scans =
+    versionIds.length > 0
+      ? await db
+          .select()
+          .from(scanResults)
+          .where(inArray(scanResults.skillVersionId, versionIds))
+      : [];
+
+  const scanByVersion = new Map<string, typeof scans[0]>();
+  for (const s of scans) {
+    const existing = scanByVersion.get(s.skillVersionId);
+    if (!existing || s.createdAt > existing.createdAt) {
+      scanByVersion.set(s.skillVersionId, s);
+    }
+  }
+
+  return userSkills.map((row) => {
+    const latestVersion = latestBySkill.get(row.skill.id) ?? null;
+    const scan = latestVersion ? scanByVersion.get(latestVersion.id) ?? null : null;
+    return { ...row, latestVersion, scan };
+  });
+}
+
+export async function getUserStats(db: DrizzleD1Database, userId: string) {
+  const [skillCount] = await db
+    .select({ total: count() })
+    .from(skills)
+    .where(eq(skills.ownerId, userId));
+
+  const [downloadSum] = await db
+    .select({ total: sql<number>`coalesce(sum(${skills.downloadCount}), 0)` })
+    .from(skills)
+    .where(eq(skills.ownerId, userId));
+
+  const [versionCount] = await db
+    .select({ total: count() })
+    .from(skillVersions)
+    .innerJoin(skills, eq(skills.id, skillVersions.skillId))
+    .where(eq(skills.ownerId, userId));
+
+  return {
+    totalSkills: skillCount?.total ?? 0,
+    totalDownloads: downloadSum?.total ?? 0,
+    totalVersions: versionCount?.total ?? 0,
+  };
+}
+
+export async function getRecentActivity(db: DrizzleD1Database, userId: string) {
+  // Recent publishes by user
+  const recentPublishes = await db
+    .select({
+      type: sql<string>`'publish'`.as("type"),
+      skillName: skills.name,
+      version: skillVersions.version,
+      createdAt: skillVersions.createdAt,
+    })
+    .from(skillVersions)
+    .innerJoin(skills, eq(skills.id, skillVersions.skillId))
+    .where(eq(skillVersions.publishedBy, userId))
+    .orderBy(desc(skillVersions.createdAt))
+    .limit(10);
+
+  // Recent installs of user's skills
+  const recentInstalls = await db
+    .select({
+      type: sql<string>`'install'`.as("type"),
+      skillName: skills.name,
+      version: skillVersions.version,
+      createdAt: installEvents.createdAt,
+    })
+    .from(installEvents)
+    .innerJoin(skillVersions, eq(skillVersions.id, installEvents.skillVersionId))
+    .innerJoin(skills, eq(skills.id, skillVersions.skillId))
+    .where(eq(skills.ownerId, userId))
+    .orderBy(desc(installEvents.createdAt))
+    .limit(10);
+
+  // Merge and sort
+  const all = [...recentPublishes, ...recentInstalls]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
+
+  return all;
+}
+
+export async function listUserTokens(db: DrizzleD1Database, userId: string) {
+  return db
+    .select({
+      id: apiTokens.id,
+      name: apiTokens.name,
+      scopes: apiTokens.scopes,
+      lastUsedAt: apiTokens.lastUsedAt,
+      expiresAt: apiTokens.expiresAt,
+      createdAt: apiTokens.createdAt,
+    })
+    .from(apiTokens)
+    .where(eq(apiTokens.userId, userId))
+    .orderBy(desc(apiTokens.createdAt));
+}
+
+// ─── Public queries ────────────────────────────────────────────────
 
 export async function listPublicSkillsWithDetails(
   db: DrizzleD1Database,
