@@ -21,10 +21,15 @@ import { Route as ProtectedDashboardIndexRouteImport } from './routes/_protected
 import { Route as SkillsOwnerNameRouteImport } from './routes/skills/$owner/$name'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ProtectedDashboardTokensRouteImport } from './routes/_protected/dashboard/tokens'
+import { Route as ProtectedDashboardSettingsRouteImport } from './routes/_protected/dashboard/settings'
 import { Route as ApiV1SkillsIndexRouteImport } from './routes/api/v1/skills/index'
+import { Route as ProtectedDashboardSkillsIndexRouteImport } from './routes/_protected/dashboard/skills/index'
 import { Route as SkillsOwnerNameVersionRouteImport } from './routes/skills/$owner/$name/$version'
 import { Route as ApiV1AuthTokensRouteImport } from './routes/api/v1/auth/tokens'
 import { Route as ApiV1AuthMeRouteImport } from './routes/api/v1/auth/me'
+import { Route as ProtectedDashboardSkillsNewRouteImport } from './routes/_protected/dashboard/skills/new'
+import { Route as ProtectedDashboardSkillsNameRouteImport } from './routes/_protected/dashboard/skills/$name'
 import { Route as ApiV1SkillsOwnerNameRouteImport } from './routes/api/v1/skills/$owner/$name'
 import { Route as ApiV1AuthTokensIdRouteImport } from './routes/api/v1/auth/tokens.$id'
 import { Route as ApiV1SkillsOwnerNameVersionsRouteImport } from './routes/api/v1/skills/$owner/$name/versions'
@@ -92,11 +97,29 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedDashboardTokensRoute =
+  ProtectedDashboardTokensRouteImport.update({
+    id: '/tokens',
+    path: '/tokens',
+    getParentRoute: () => ProtectedDashboardRoute,
+  } as any)
+const ProtectedDashboardSettingsRoute =
+  ProtectedDashboardSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => ProtectedDashboardRoute,
+  } as any)
 const ApiV1SkillsIndexRoute = ApiV1SkillsIndexRouteImport.update({
   id: '/api/v1/skills/',
   path: '/api/v1/skills/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedDashboardSkillsIndexRoute =
+  ProtectedDashboardSkillsIndexRouteImport.update({
+    id: '/skills/',
+    path: '/skills/',
+    getParentRoute: () => ProtectedDashboardRoute,
+  } as any)
 const SkillsOwnerNameVersionRoute = SkillsOwnerNameVersionRouteImport.update({
   id: '/$version',
   path: '/$version',
@@ -112,6 +135,18 @@ const ApiV1AuthMeRoute = ApiV1AuthMeRouteImport.update({
   path: '/api/v1/auth/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedDashboardSkillsNewRoute =
+  ProtectedDashboardSkillsNewRouteImport.update({
+    id: '/skills/new',
+    path: '/skills/new',
+    getParentRoute: () => ProtectedDashboardRoute,
+  } as any)
+const ProtectedDashboardSkillsNameRoute =
+  ProtectedDashboardSkillsNameRouteImport.update({
+    id: '/skills/$name',
+    path: '/skills/$name',
+    getParentRoute: () => ProtectedDashboardRoute,
+  } as any)
 const ApiV1SkillsOwnerNameRoute = ApiV1SkillsOwnerNameRouteImport.update({
   id: '/api/v1/skills/$owner/$name',
   path: '/api/v1/skills/$owner/$name',
@@ -161,13 +196,18 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof ProtectedDashboardRouteWithChildren
+  '/dashboard/settings': typeof ProtectedDashboardSettingsRoute
+  '/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
   '/dashboard/': typeof ProtectedDashboardIndexRoute
+  '/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
+  '/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
   '/api/v1/auth/me': typeof ApiV1AuthMeRoute
   '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
+  '/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
@@ -184,13 +224,18 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/dashboard/settings': typeof ProtectedDashboardSettingsRoute
+  '/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
   '/dashboard': typeof ProtectedDashboardIndexRoute
+  '/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
+  '/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
   '/api/v1/auth/me': typeof ApiV1AuthMeRoute
   '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
+  '/dashboard/skills': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills': typeof ApiV1SkillsIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
@@ -210,13 +255,18 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_protected/dashboard': typeof ProtectedDashboardRouteWithChildren
+  '/_protected/dashboard/settings': typeof ProtectedDashboardSettingsRoute
+  '/_protected/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
   '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
   '/_protected/dashboard/': typeof ProtectedDashboardIndexRoute
+  '/_protected/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
+  '/_protected/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
   '/api/v1/auth/me': typeof ApiV1AuthMeRoute
   '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
+  '/_protected/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
@@ -236,13 +286,18 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard'
+    | '/dashboard/settings'
+    | '/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
     | '/skills/$owner/$name'
     | '/dashboard/'
+    | '/dashboard/skills/$name'
+    | '/dashboard/skills/new'
     | '/api/v1/auth/me'
     | '/api/v1/auth/tokens'
     | '/skills/$owner/$name/$version'
+    | '/dashboard/skills/'
     | '/api/v1/skills/'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
@@ -259,13 +314,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/dashboard/settings'
+    | '/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
     | '/skills/$owner/$name'
     | '/dashboard'
+    | '/dashboard/skills/$name'
+    | '/dashboard/skills/new'
     | '/api/v1/auth/me'
     | '/api/v1/auth/tokens'
     | '/skills/$owner/$name/$version'
+    | '/dashboard/skills'
     | '/api/v1/skills'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
@@ -284,13 +344,18 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_protected/dashboard'
+    | '/_protected/dashboard/settings'
+    | '/_protected/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
     | '/skills/$owner/$name'
     | '/_protected/dashboard/'
+    | '/_protected/dashboard/skills/$name'
+    | '/_protected/dashboard/skills/new'
     | '/api/v1/auth/me'
     | '/api/v1/auth/tokens'
     | '/skills/$owner/$name/$version'
+    | '/_protected/dashboard/skills/'
     | '/api/v1/skills/'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
@@ -404,12 +469,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/dashboard/tokens': {
+      id: '/_protected/dashboard/tokens'
+      path: '/tokens'
+      fullPath: '/dashboard/tokens'
+      preLoaderRoute: typeof ProtectedDashboardTokensRouteImport
+      parentRoute: typeof ProtectedDashboardRoute
+    }
+    '/_protected/dashboard/settings': {
+      id: '/_protected/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof ProtectedDashboardSettingsRouteImport
+      parentRoute: typeof ProtectedDashboardRoute
+    }
     '/api/v1/skills/': {
       id: '/api/v1/skills/'
       path: '/api/v1/skills'
       fullPath: '/api/v1/skills/'
       preLoaderRoute: typeof ApiV1SkillsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/dashboard/skills/': {
+      id: '/_protected/dashboard/skills/'
+      path: '/skills'
+      fullPath: '/dashboard/skills/'
+      preLoaderRoute: typeof ProtectedDashboardSkillsIndexRouteImport
+      parentRoute: typeof ProtectedDashboardRoute
     }
     '/skills/$owner/$name/$version': {
       id: '/skills/$owner/$name/$version'
@@ -431,6 +517,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/auth/me'
       preLoaderRoute: typeof ApiV1AuthMeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/dashboard/skills/new': {
+      id: '/_protected/dashboard/skills/new'
+      path: '/skills/new'
+      fullPath: '/dashboard/skills/new'
+      preLoaderRoute: typeof ProtectedDashboardSkillsNewRouteImport
+      parentRoute: typeof ProtectedDashboardRoute
+    }
+    '/_protected/dashboard/skills/$name': {
+      id: '/_protected/dashboard/skills/$name'
+      path: '/skills/$name'
+      fullPath: '/dashboard/skills/$name'
+      preLoaderRoute: typeof ProtectedDashboardSkillsNameRouteImport
+      parentRoute: typeof ProtectedDashboardRoute
     }
     '/api/v1/skills/$owner/$name': {
       id: '/api/v1/skills/$owner/$name'
@@ -485,11 +585,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedDashboardRouteChildren {
+  ProtectedDashboardSettingsRoute: typeof ProtectedDashboardSettingsRoute
+  ProtectedDashboardTokensRoute: typeof ProtectedDashboardTokensRoute
   ProtectedDashboardIndexRoute: typeof ProtectedDashboardIndexRoute
+  ProtectedDashboardSkillsNameRoute: typeof ProtectedDashboardSkillsNameRoute
+  ProtectedDashboardSkillsNewRoute: typeof ProtectedDashboardSkillsNewRoute
+  ProtectedDashboardSkillsIndexRoute: typeof ProtectedDashboardSkillsIndexRoute
 }
 
 const ProtectedDashboardRouteChildren: ProtectedDashboardRouteChildren = {
+  ProtectedDashboardSettingsRoute: ProtectedDashboardSettingsRoute,
+  ProtectedDashboardTokensRoute: ProtectedDashboardTokensRoute,
   ProtectedDashboardIndexRoute: ProtectedDashboardIndexRoute,
+  ProtectedDashboardSkillsNameRoute: ProtectedDashboardSkillsNameRoute,
+  ProtectedDashboardSkillsNewRoute: ProtectedDashboardSkillsNewRoute,
+  ProtectedDashboardSkillsIndexRoute: ProtectedDashboardSkillsIndexRoute,
 }
 
 const ProtectedDashboardRouteWithChildren =
