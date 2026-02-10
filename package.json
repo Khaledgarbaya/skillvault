@@ -5,10 +5,10 @@
   "scripts": {
     "build:shared": "pnpm --filter @skvault/shared build",
     "build:web": "pnpm --filter @skvault/web build",
-    "build:cli": "pnpm --filter skvault build",
+    "build:cli": "pnpm --filter ./apps/cli build",
     "build": "pnpm build:shared && pnpm build:web && pnpm build:cli",
     "dev": "pnpm --filter @skvault/web dev",
-    "dev:cli": "pnpm --filter skvault dev",
+    "dev:cli": "pnpm --filter ./apps/cli dev",
     "dev:wrangler": "pnpm --filter @skvault/web exec wrangler dev",
     "test": "echo \"No tests configured yet\"",
     "db:generate": "pnpm --filter @skvault/web db:generate",
