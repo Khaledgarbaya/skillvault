@@ -1,10 +1,15 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { auth } from "~/lib/auth/server";
+import { createAuth } from "~/lib/auth/server";
 import { jsonError } from "~/lib/api/response";
 import type { Logger } from "~/lib/logger";
+import type { CloudflareEnv } from "./types";
 
 function getLogger(context: unknown): Logger | undefined {
   return (context as { logger?: Logger }).logger;
+}
+
+function getEnv(context: unknown): CloudflareEnv {
+  return (context as { cloudflare: { env: CloudflareEnv } }).cloudflare.env;
 }
 
 function enrichLogger(
@@ -23,6 +28,7 @@ function enrichLogger(
  */
 export const authMiddleware = createMiddleware().server(
   async ({ request, next, context }) => {
+    const auth = createAuth(getEnv(context));
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       throw new Error("Unauthorized");
@@ -54,6 +60,8 @@ function extractBearerToken(request: Request): string | null {
 export function requireScope(scope: string) {
   return createMiddleware().server(
     async ({ request, next, context }) => {
+      const auth = createAuth(getEnv(context));
+
       // 1. Try session auth (cookie or Bearer session token)
       const session = await auth.api.getSession({ headers: request.headers });
       if (session) {
@@ -107,12 +115,16 @@ export type AuthResult = {
 
 /**
  * Require session or API key with a specific scope. Throws 401 Response.
- * Use in API route handlers where per-method middleware isn't available.
+ * Use in API route handlers that have cloudflareMiddleware in their chain.
  */
 export async function requireScopeFromRequest(
   request: Request,
   scope: string,
+  env?: CloudflareEnv,
 ): Promise<AuthResult> {
+  const resolvedEnv = env ?? (await import("cloudflare:workers")).env;
+  const auth = createAuth(resolvedEnv as CloudflareEnv);
+
   // 1. Try session auth
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) {
@@ -136,12 +148,16 @@ export async function requireScopeFromRequest(
 
 /**
  * Optional session or API key auth. Returns null if unauthenticated.
- * Use in API route handlers for public endpoints with optional auth.
+ * Use in API route handlers that have cloudflareMiddleware in their chain.
  */
 export async function optionalScopeFromRequest(
   request: Request,
   scope: string,
+  env?: CloudflareEnv,
 ): Promise<AuthResult | null> {
+  const resolvedEnv = env ?? (await import("cloudflare:workers")).env;
+  const auth = createAuth(resolvedEnv as CloudflareEnv);
+
   // 1. Try session auth
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) {
@@ -174,6 +190,8 @@ export async function optionalScopeFromRequest(
 export function optionalScope(scope: string) {
   return createMiddleware().server(
     async ({ request, next, context }) => {
+      const auth = createAuth(getEnv(context));
+
       // 1. Try session auth
       const session = await auth.api.getSession({ headers: request.headers });
       if (session) {

@@ -6,6 +6,10 @@ export interface CloudflareEnv {
   SKILLS_BUCKET: R2Bucket;
   CACHE: KVNamespace;
   APP_URL: string;
+  AUTH_SECRET: string;
+  RESEND_API_KEY: string;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
   VITE_PUBLIC_POSTHOG_KEY: string;
   VITE_PUBLIC_POSTHOG_HOST: string;
 }

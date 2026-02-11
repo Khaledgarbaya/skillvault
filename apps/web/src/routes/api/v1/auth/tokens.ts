@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { auth } from "~/lib/auth/server";
+import { createAuth } from "~/lib/auth/server";
 import { jsonError } from "~/lib/api/response";
 import {
   loggingMiddleware,
@@ -12,9 +12,10 @@ export const Route = createFileRoute("/api/v1/auth/tokens")({
   server: {
     middleware: [loggingMiddleware, cloudflareMiddleware],
     handlers: {
-      GET: async ({ request }: { request: Request; context: LoggedContext }) => {
+      GET: async ({ request, context }: { request: Request; context: LoggedContext }) => {
         await requireScopeFromRequest(request, "read");
 
+        const auth = createAuth(context.cloudflare.env);
         const keys = await auth.api.listApiKeys({
           headers: request.headers,
         });
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/api/v1/auth/tokens")({
         );
       },
 
-      POST: async ({ request }: { request: Request; context: LoggedContext }) => {
+      POST: async ({ request, context }: { request: Request; context: LoggedContext }) => {
         const authResult = await requireScopeFromRequest(request, "read");
 
         const body = (await request.json()) as {
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/api/v1/auth/tokens")({
 
         const scopes = (body.scopes ?? "publish,read").split(",").map((s) => s.trim());
 
+        const auth = createAuth(context.cloudflare.env);
         const result = await auth.api.createApiKey({
           body: {
             name: body.name,

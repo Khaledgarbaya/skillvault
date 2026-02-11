@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { auth } from "~/lib/auth/server";
+import { createAuth } from "~/lib/auth/server";
 import { jsonError } from "~/lib/api/response";
 import {
   loggingMiddleware,
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/api/v1/auth/tokens/$id")({
       DELETE: async ({
         request,
         params,
+        context,
       }: {
         request: Request;
         params: { id: string };
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/api/v1/auth/tokens/$id")({
         await requireScopeFromRequest(request, "read");
 
         try {
+          const auth = createAuth(context.cloudflare.env);
           await auth.api.deleteApiKey({
             body: { keyId: params.id },
           });

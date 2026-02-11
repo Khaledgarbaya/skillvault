@@ -1,9 +1,10 @@
-import { env } from "cloudflare:workers";
 import { setCookie } from "@tanstack/react-start/server";
-import { auth, type Session } from "./server";
+import { createAuth, type Session } from "./server";
 import { jsonError } from "../api/response";
+import type { CloudflareEnv } from "~/lib/middleware/types";
 
-export async function requireAuth(request: Request): Promise<Session> {
+export async function requireAuth(request: Request, env: CloudflareEnv): Promise<Session> {
+  const auth = createAuth(env);
   const session = await auth.api.getSession({
     headers: request.headers,
   });
@@ -15,7 +16,9 @@ export async function requireAuth(request: Request): Promise<Session> {
 
 export async function optionalAuth(
   request: Request,
+  env: CloudflareEnv,
 ): Promise<Session | null> {
+  const auth = createAuth(env);
   return auth.api.getSession({ headers: request.headers });
 }
 
@@ -28,7 +31,7 @@ export async function optionalAuth(
 export function invalidateSessionCache() {
   setCookie("better-auth.session_data", "", {
     httpOnly: true,
-    secure: env.APP_URL?.startsWith("https"),
+    secure: true,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
