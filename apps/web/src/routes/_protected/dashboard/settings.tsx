@@ -6,7 +6,6 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { useSession } from "~/lib/auth/client";
 import {
   updateProfileAction,
   changePasswordAction,
@@ -17,13 +16,13 @@ export const Route = createFileRoute("/_protected/dashboard/settings")({
 });
 
 function SettingsPage() {
-  const { data: session } = useSession();
+  const { user } = Route.useRouteContext();
 
   const [displayName, setDisplayName] = useState(
-    session?.user.name ?? "",
+    user.name ?? "",
   );
   const [username, setUsername] = useState(
-    session?.user.username ?? "",
+    user.username ?? "",
   );
   const [profileSaving, setProfileSaving] = useState(false);
 
@@ -118,14 +117,14 @@ function SettingsPage() {
               Used in skill names like <span className="font-mono text-primary">{username || "you"}/my-skill</span>
             </p>
           </div>
-          {session?.user.image && (
+          {user.image && (
             <div className="space-y-2">
               <Label className="text-[13px]">Avatar</Label>
               <div className="flex items-center gap-3">
                 <Avatar className="size-10 border border-border/50">
-                  <AvatarImage src={session.user.image} alt="" />
+                  <AvatarImage src={user.image} alt="" />
                   <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
-                    {(session.user.name ?? "U").charAt(0).toUpperCase()}
+                    {(user.name ?? "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-muted-foreground/70">

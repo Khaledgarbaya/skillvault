@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { signOut, useSession } from "~/lib/auth/client";
+import { signOut } from "~/lib/auth/client";
 
 export const Route = createFileRoute("/_protected/dashboard")({
   component: DashboardLayout,
@@ -33,7 +33,7 @@ const navItems = [
 
 function DashboardLayout() {
   const navigate = useNavigate();
-  const { data: session } = useSession();
+  const { user } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -46,8 +46,6 @@ function DashboardLayout() {
     if (exact) return pathname === to;
     return pathname.startsWith(to);
   }
-
-  const user = session?.user;
 
   const sidebar = (
     <nav className="flex h-full flex-col">
@@ -125,13 +123,13 @@ function DashboardLayout() {
           </Button>
           <div className="ml-auto flex items-center gap-3">
             <Avatar className="size-7 border border-border/50">
-              <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? ""} />
+              <AvatarImage src={user.image ?? undefined} alt={user.name ?? ""} />
               <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
-                {(user?.name ?? user?.email ?? "U").charAt(0).toUpperCase()}
+                {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <span className="text-[13px] text-muted-foreground">
-              {(user as Record<string, unknown> | undefined)?.username as string ?? user?.name}
+              {(user as Record<string, unknown>).username as string ?? user.name}
             </span>
           </div>
         </header>
