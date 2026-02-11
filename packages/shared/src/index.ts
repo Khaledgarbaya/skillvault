@@ -17,6 +17,11 @@ export {
   parseFrontmatter,
   validateTarballSize,
   MAX_TARBALL_SIZE,
+  MAX_DECOMPRESSED_SIZE,
+  MAX_FILE_COUNT,
+  MAX_FILE_SIZE,
+  MAX_PATH_LENGTH,
+  MAX_BASE64_LENGTH,
 } from "./validation.js";
 
 export type { SkillFrontmatter } from "./validation.js";

@@ -1,3 +1,10 @@
+import {
+  MAX_DECOMPRESSED_SIZE,
+  MAX_FILE_COUNT,
+  MAX_FILE_SIZE,
+  MAX_PATH_LENGTH,
+} from "@skvault/shared";
+
 export interface TarEntry {
   name: string;
   size: number;
@@ -26,7 +33,7 @@ export interface TarballContents {
  * Header offsets: name 0-100, size 124-136 (octal ASCII), typeflag 156.
  */
 export async function parseTarball(gzipped: ArrayBuffer): Promise<TarballContents> {
-  const decompressed = await decompress(gzipped);
+  const decompressed = await decompress(gzipped, MAX_DECOMPRESSED_SIZE);
   const bytes = new Uint8Array(decompressed);
 
   const files: TarEntry[] = [];
@@ -60,6 +67,30 @@ export async function parseTarball(gzipped: ArrayBuffer): Promise<TarballContent
     // Normalize: strip leading "./" or "/"
     fullName = fullName.replace(/^\.\//, "").replace(/^\//, "");
 
+    // --- Security checks ---
+
+    // Reject null bytes in filename
+    if (fullName.includes("\0")) {
+      throw new TarballError("Invalid filename: contains null bytes");
+    }
+
+    // Reject path traversal
+    if (fullName.includes("..")) {
+      throw new TarballError("Path traversal detected");
+    }
+
+    // Reject absurdly long paths
+    if (fullName.length > MAX_PATH_LENGTH) {
+      throw new TarballError(`Path exceeds maximum length of ${MAX_PATH_LENGTH} characters`);
+    }
+
+    // Per-file size limit
+    if (size > MAX_FILE_SIZE) {
+      throw new TarballError(
+        `File "${fullName}" exceeds maximum size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+      );
+    }
+
     offset += 512; // move past header
 
     // typeflag: '0' or '\0' = regular file, '5' = directory
@@ -68,6 +99,11 @@ export async function parseTarball(gzipped: ArrayBuffer): Promise<TarballContent
     if (isFile && size > 0 && fullName) {
       files.push({ name: fullName, size });
       totalSizeBytes += size;
+
+      // File count limit
+      if (files.length > MAX_FILE_COUNT) {
+        throw new TarballError(`Archive exceeds maximum of ${MAX_FILE_COUNT} files`);
+      }
 
       // Extract text content for scannable files
       if (isTextFile(fullName)) {
@@ -96,6 +132,13 @@ export async function parseTarball(gzipped: ArrayBuffer): Promise<TarballContent
   };
 }
 
+export class TarballError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TarballError";
+  }
+}
+
 const TEXT_EXTENSIONS = new Set([
   ".md", ".txt", ".ts", ".js", ".py", ".sh", ".bash", ".zsh",
   ".yml", ".yaml", ".json", ".toml", ".cfg", ".ini", ".env",
@@ -115,7 +158,7 @@ function isSkillMd(path: string): boolean {
   return filename === "SKILL.md" && segments.length <= 2;
 }
 
-async function decompress(gzipped: ArrayBuffer): Promise<ArrayBuffer> {
+async function decompress(gzipped: ArrayBuffer, maxBytes: number): Promise<ArrayBuffer> {
   const ds = new DecompressionStream("gzip");
   const writer = ds.writable.getWriter();
   const reader = ds.readable.getReader();
@@ -123,14 +166,20 @@ async function decompress(gzipped: ArrayBuffer): Promise<ArrayBuffer> {
   // Write and close in background
   const writePromise = writer.write(new Uint8Array(gzipped)).then(() => writer.close());
 
-  // Read all chunks
+  // Read all chunks with size tracking
   const chunks: Uint8Array[] = [];
   let totalLength = 0;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    chunks.push(value);
     totalLength += value.length;
+    if (totalLength > maxBytes) {
+      await reader.cancel();
+      throw new TarballError(
+        `Decompressed size exceeds maximum of ${maxBytes / (1024 * 1024)}MB`,
+      );
+    }
+    chunks.push(value);
   }
 
   await writePromise;

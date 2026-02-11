@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { eq, and, ne } from "drizzle-orm";
-import { validateSkillName } from "@skvault/shared";
+import { validateSkillName, MAX_BASE64_LENGTH } from "@skvault/shared";
 import { auth } from "./auth/server";
 import { invalidateSessionCache } from "./auth/middleware";
 import {
@@ -179,11 +179,17 @@ export const publishVersionAction = createServerFn({ method: "POST" })
       skillId: string;
       version: string;
       tarball: string; // base64 encoded
+      filename: string; // original filename for format detection
     }) => data,
   )
   .handler(async ({ request, data }) => {
     const session = await requireSession(request!);
     const db = getDb();
+
+    // Reject oversized base64 before decoding to prevent memory exhaustion
+    if (data.tarball.length > MAX_BASE64_LENGTH) {
+      throw new Error("Upload exceeds maximum size of 5MB");
+    }
 
     // Verify ownership
     const [skill] = await db
@@ -209,6 +215,7 @@ export const publishVersionAction = createServerFn({ method: "POST" })
       publishedBy: session.user.id,
       version: data.version,
       tarball: bytes.buffer as ArrayBuffer,
+      filename: data.filename,
     });
 
     return result;

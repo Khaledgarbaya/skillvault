@@ -140,7 +140,12 @@ export function parseFrontmatter(content: string): SkillFrontmatter | null {
   return result as SkillFrontmatter;
 }
 
-export const MAX_TARBALL_SIZE = 5 * 1024 * 1024;
+export const MAX_TARBALL_SIZE = 5 * 1024 * 1024; // 5MB compressed
+export const MAX_DECOMPRESSED_SIZE = 50 * 1024 * 1024; // 50MB decompressed
+export const MAX_FILE_COUNT = 1000;
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+export const MAX_PATH_LENGTH = 512;
+export const MAX_BASE64_LENGTH = 7_000_000; // ~5MB binary = ~6.7MB base64
 
 export function validateTarballSize(bytes: number): boolean {
   return bytes <= MAX_TARBALL_SIZE;
