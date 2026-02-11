@@ -1,15 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { auth } from "~/lib/auth/server";
-
-const getSessionFn = createServerFn({ method: "GET" }).handler(
-  async ({ request }) => {
-    const session = await auth.api.getSession({
-      headers: request!.headers,
-    });
-    return session;
-  },
-);
+import { getSessionFn } from "~/lib/auth/session";
 
 export const Route = createFileRoute("/_protected")({
   beforeLoad: async () => {
