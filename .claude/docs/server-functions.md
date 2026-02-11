@@ -32,7 +32,7 @@ Always use this order: `loggingMiddleware` → `cloudflareMiddleware` → `authM
 | `LoggedAuthContext` | cloudflare env + session + logger | Authenticated operations (most server fns) |
 | `LoggedContext` | cloudflare env + logger | Public/unauthenticated operations |
 
-Types are defined in `src/lib/middleware/types.ts`. `CloudflareEnv` is the single source of truth for all Cloudflare bindings.
+Types are defined in `src/lib/middleware/types.ts`. `CloudflareEnv` is the single source of truth for all Cloudflare bindings and secrets (DB, R2, KV, AUTH_SECRET, RESEND_API_KEY, GITHUB_CLIENT_ID, etc.).
 
 ## With inputValidator
 
@@ -66,7 +66,7 @@ The handler always receives `request` as a top-level arg alongside `context` and
 | **Server functions** (`createServerFn`) | Mutations and internal data fetching | Typed RPC, middleware context, no public URL |
 | **Server routes** (`server.handlers`) | Webhooks, external APIs, streaming | Need a callable URL for external consumers |
 
-Server functions get middleware context. Server routes do NOT — they use inline auth helpers from `lib/auth/middleware.ts` instead.
+Server functions get middleware context. Server routes use inline auth helpers from `lib/middleware/auth.ts` (`requireScopeFromRequest`, `optionalScopeFromRequest`) and the `createAuth(env)` factory for direct auth API calls.
 
 ## Client Hook Pattern
 
@@ -96,8 +96,10 @@ export const getSkillsFn = createServerFn({ method: 'GET' })
 |------|---------|
 | `src/lib/middleware/types.ts` | `CloudflareEnv`, `LoggedAuthContext`, `RequestLogger` |
 | `src/lib/middleware/cloudflare.ts` | Passes `{ cloudflare: { env } }` context |
-| `src/lib/middleware/auth.ts` | Passes `{ session }` context |
+| `src/lib/middleware/auth.ts` | `authMiddleware`, `requireScope()`, `optionalScope()`, inline helpers |
 | `src/lib/middleware/index.ts` | Barrel re-exports |
 | `src/lib/api/with-logging.ts` | `loggingMiddleware` — passes `{ logger }` context |
+| `src/lib/auth/server.ts` | `createAuth(env)` factory — NEVER import as singleton |
+| `src/lib/auth/session.ts` | `getSessionFn` — session check for route loaders |
+| `src/lib/auth/middleware.ts` | `requireAuth`, `optionalAuth`, `invalidateSessionCache` |
 | `src/lib/dashboard-fns.ts` | All dashboard server functions |
-| `src/lib/auth/middleware.ts` | Auth helpers for API routes (NOT middleware context) |

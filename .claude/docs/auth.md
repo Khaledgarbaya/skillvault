@@ -8,11 +8,31 @@
 
 | File | Purpose |
 |------|---------|
-| `src/lib/auth/server.ts` | better-auth config (providers, session, email) |
+| `src/lib/auth/server.ts` | `createAuth(env)` factory — better-auth config (providers, session, email) |
 | `src/lib/auth/client.ts` | React client (`signIn`, `signUp`, `signOut`, `useSession`) |
-| `src/lib/auth/middleware.ts` | `requireAuth`, `optionalAuth`, `requireToken`, `invalidateSessionCache` |
+| `src/lib/auth/session.ts` | `getSessionFn` — shared server function for session checks in route loaders |
+| `src/lib/auth/middleware.ts` | `requireAuth`, `optionalAuth`, `invalidateSessionCache` |
+| `src/lib/middleware/auth.ts` | TanStack Start middleware (`authMiddleware`, `requireScope`, `optionalScope`) |
 | `src/lib/email.ts` | Resend API wrapper with retry + idempotency |
 | `src/routes/api/auth/$.ts` | Catch-all route — handles ALL better-auth endpoints |
+
+## Auth Factory Pattern (Critical)
+
+`auth/server.ts` exports a **factory function**, not a singleton:
+
+```typescript
+import { createAuth } from "~/lib/auth/server";
+
+const auth = createAuth(context.cloudflare.env);
+```
+
+**Why:** TanStack Start generates client stubs for server functions. Any module imported by a server function gets bundled into the client. If `auth/server.ts` had a top-level `import { env } from "cloudflare:workers"` and called `betterAuth()` at module scope, the entire better-auth config (including social provider secrets) would evaluate on the client, causing warnings and bloating the bundle.
+
+**Rules:**
+- NEVER import `cloudflare:workers` at the top level of `auth/server.ts`
+- NEVER create an `auth` singleton at module scope — always use `createAuth(env)`
+- In middleware/server fns: get env from `context.cloudflare.env` (provided by `cloudflareMiddleware`)
+- In API route handlers: get env from `context.cloudflare.env` or use dynamic `import("cloudflare:workers")`
 
 ## Cookie Cache Invalidation (Critical)
 
@@ -34,8 +54,8 @@ invalidateSessionCache();
 
 ## Auth Strategies
 
-1. **Session-based** (browser) — cookies, use `requireAuth(request)` / `optionalAuth(request)`
-2. **Token-based** (CLI/API) — `Authorization: Bearer <token>`, use `requireToken(request, db)`
+1. **Session-based** (browser) — cookies, handled by `authMiddleware` or `requireAuth(request, env)`
+2. **Token-based** (CLI/API) — `Authorization: Bearer <token>` or `x-api-key`, handled by `requireScope('publish')` middleware or `requireScopeFromRequest(request, "publish")` helper
 
 ## Route Protection
 

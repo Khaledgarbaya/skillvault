@@ -36,7 +36,7 @@ All server functions use the full middleware chain:
 
 Never use manual auth checks like `auth.api.getSession()` in handlers — always use middleware.
 
-**Middleware CANNOT call server functions.** They must directly access the environment and fetch session. See `src/lib/auth/middleware.ts` for the correct pattern.
+**Middleware CANNOT call server functions.** They must directly access the environment and fetch session. See `src/lib/middleware/auth.ts` for the correct pattern.
 
 ### Cloudflare Environment Access
 
@@ -45,9 +45,12 @@ Middleware provides typed access to D1, R2, and KV:
 ```typescript
 import { cloudflareMiddleware } from "~/lib/middleware/cloudflare";
 
-// context.cloudflare.env gives you DB, SKILLS_BUCKET, CACHE
+// context.cloudflare.env gives you DB, SKILLS_BUCKET, CACHE, and all secrets
 const db = drizzle(context.cloudflare.env.DB);
+const auth = createAuth(context.cloudflare.env);
 ```
+
+**NEVER import `cloudflare:workers` or `auth/server` at the top level of files that TanStack Start bundles for the client.** Use the `createAuth(env)` factory with runtime env from middleware context instead. See [Authentication](.claude/docs/auth.md) for details.
 
 ### Typed Context
 
@@ -65,7 +68,7 @@ export const myFn = createServerFn({ method: "POST" })
   });
 ```
 
-`CloudflareEnv` is the single source of truth, defined in `src/env.d.ts` and imported by middleware types.
+`CloudflareEnv` is the single source of truth for all bindings and secrets, defined in `src/lib/middleware/types.ts`.
 
 ### Client Hook Pattern
 
@@ -93,13 +96,24 @@ Toast notifications: `sonner` with `toast.success()` / `toast.error()` (hardcode
 
 ### Access Control
 
-Use auth helpers from `src/lib/auth/middleware.ts`:
+**Server functions** use middleware — `authMiddleware` or `requireScope('...')` (see middleware chain above).
+
+**API route handlers** (`server.handlers`) use inline helpers from `src/lib/middleware/auth.ts`:
 
 ```typescript
-import { requireAuth, requireAuthOrToken, optionalAuth, optionalTokenAuth } from "~/lib/auth/middleware";
+import { requireScopeFromRequest, optionalScopeFromRequest } from "~/lib/middleware";
 
-const session = await requireAuth(request);
-const authResult = await requireAuthOrToken(request, db, "publish");
+// These get env from cloudflare:workers internally (server-only context)
+const authResult = await requireScopeFromRequest(request, "publish");
+```
+
+For direct auth operations in route handlers, use the `createAuth` factory:
+
+```typescript
+import { createAuth } from "~/lib/auth/server";
+
+const auth = createAuth(context.cloudflare.env);
+const session = await auth.api.getSession({ headers: request.headers });
 ```
 
 ## Domain References

@@ -20,6 +20,8 @@ Stored in `apps/web/.dev.vars` (gitignored) for local dev:
 
 For production, set via: `wrangler secret put <NAME>`
 
+All secrets are included in `CloudflareEnv` (`src/lib/middleware/types.ts`) alongside bindings. Access them via `context.cloudflare.env` from middleware context — **never** via top-level `import { env } from "cloudflare:workers"` in files that touch the client bundle.
+
 ## Entry Point
 
 `main = "@tanstack/react-start/server-entry"` — do not change this.
