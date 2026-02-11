@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
@@ -12,8 +13,24 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { signIn } from "~/lib/auth/client";
+import { auth } from "~/lib/auth/server";
+
+const getSessionFn = createServerFn({ method: "GET" }).handler(
+  async ({ request }) => {
+    const session = await auth.api.getSession({
+      headers: request!.headers,
+    });
+    return session;
+  },
+);
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async () => {
+    const session = await getSessionFn();
+    if (session?.user) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginPage,
 });
 
