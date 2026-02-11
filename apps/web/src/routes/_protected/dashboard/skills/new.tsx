@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { validateVersion } from "@skvault/shared";
-import { Upload, Check } from "lucide-react";
+import { Upload, Check, FolderOpen } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -10,12 +10,20 @@ import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
 import { Badge } from "~/components/ui/badge";
 import { ScanReport } from "~/components/scan-report";
+import { FileTree } from "~/components/file-tree";
 import {
   validateSkillNameAction,
   publishSkillAction,
   publishVersionAction,
 } from "~/lib/dashboard-fns";
 import { formatBytes } from "~/lib/format";
+import {
+  detectFormat,
+  readFileEntries,
+  readDirectoryEntries,
+  packTarGz,
+} from "~/lib/pack";
+import type { FileEntry } from "~/lib/pack";
 
 export const Route = createFileRoute("/_protected/dashboard/skills/new")({
   component: PublishSkill,
@@ -37,7 +45,14 @@ function PublishSkill() {
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [version, setVersion] = useState("1.0.0");
-  const [file, setFile] = useState<File | null>(null);
+
+  // Upload state
+  const [file, setFile] = useState<File | Blob | null>(null);
+  const [filename, setFilename] = useState("");
+  const [fileEntries, setFileEntries] = useState<FileEntry[] | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [sourceLabel, setSourceLabel] = useState("");
 
   // Validation state
   const [nameError, setNameError] = useState<string | null>(null);
@@ -77,25 +92,159 @@ function PublishSkill() {
     }
   }, []);
 
-  const handleFileDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const f = e.dataTransfer.files[0];
-      if (f && f.name.endsWith(".tar.gz")) {
-        setFile(f);
-      } else {
-        toast.error("Please drop a .tar.gz file");
+  const resetUpload = useCallback(() => {
+    setFile(null);
+    setFilename("");
+    setFileEntries(null);
+    setValidationError(null);
+    setSourceLabel("");
+  }, []);
+
+  const processArchiveFile = useCallback(async (f: File) => {
+    setProcessing(true);
+    resetUpload();
+    try {
+      const format = await detectFormat(f);
+      if (format === "unknown") {
+        toast.error("Unsupported format. Upload .tar.gz or .zip");
+        return;
+      }
+
+      const entries = await readFileEntries(f);
+      const hasSkillMd = entries.some(
+        (e) => e.path === "SKILL.md" || e.path.match(/^[^/]+\/SKILL\.md$/),
+      );
+
+      setFile(f);
+      setFilename(f.name);
+      setFileEntries(entries);
+      setSourceLabel(format === "tar.gz" ? "tar.gz" : "zip");
+      setValidationError(hasSkillMd ? null : "Warning: No SKILL.md found at root level");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to read archive");
+      resetUpload();
+    } finally {
+      setProcessing(false);
+    }
+  }, [resetUpload]);
+
+  const processDirectory = useCallback(
+    async (items: DataTransferItemList) => {
+      setProcessing(true);
+      resetUpload();
+      try {
+        const dirFiles = await readDirectoryEntries(items);
+        if (dirFiles.length === 0) {
+          toast.error("Empty directory");
+          return;
+        }
+
+        const entries: FileEntry[] = dirFiles.map((f) => ({
+          path: f.path,
+          size: f.content.length,
+        }));
+        const hasSkillMd = entries.some(
+          (e) => e.path === "SKILL.md" || e.path.match(/^[^/]+\/SKILL\.md$/),
+        );
+
+        // Pack to tar.gz on client
+        const blob = packTarGz(dirFiles);
+
+        setFile(blob);
+        setFilename("directory.tar.gz");
+        setFileEntries(entries);
+        setSourceLabel("directory");
+        setValidationError(hasSkillMd ? null : "Warning: No SKILL.md found at root level");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to read directory");
+        resetUpload();
+      } finally {
+        setProcessing(false);
       }
     },
-    [],
+    [resetUpload],
+  );
+
+  const handleFileDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      const items = e.dataTransfer.items;
+
+      // Check if first item is a directory
+      if (items.length > 0) {
+        const firstEntry = items[0].webkitGetAsEntry?.();
+        if (firstEntry?.isDirectory) {
+          await processDirectory(items);
+          return;
+        }
+      }
+
+      // Otherwise treat as file
+      const f = e.dataTransfer.files[0];
+      if (f) {
+        await processArchiveFile(f);
+      }
+    },
+    [processArchiveFile, processDirectory],
   );
 
   const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
-      if (f) setFile(f);
+      if (f) await processArchiveFile(f);
     },
-    [],
+    [processArchiveFile],
+  );
+
+  const handleDirSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      setProcessing(true);
+      resetUpload();
+      try {
+        const dirFiles: { path: string; content: Uint8Array }[] = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const buffer = await f.arrayBuffer();
+          // webkitRelativePath gives "dirname/path/to/file"
+          // Strip the root dir name
+          const fullPath = f.webkitRelativePath;
+          const slashIdx = fullPath.indexOf("/");
+          const path = slashIdx === -1 ? fullPath : fullPath.slice(slashIdx + 1);
+          if (!path) continue;
+          dirFiles.push({ path, content: new Uint8Array(buffer) });
+        }
+
+        if (dirFiles.length === 0) {
+          toast.error("Empty directory");
+          return;
+        }
+
+        const entries: FileEntry[] = dirFiles.map((f) => ({
+          path: f.path,
+          size: f.content.length,
+        }));
+        const hasSkillMd = entries.some(
+          (e) => e.path === "SKILL.md" || e.path.match(/^[^/]+\/SKILL\.md$/),
+        );
+
+        const blob = packTarGz(dirFiles);
+
+        setFile(blob);
+        setFilename("directory.tar.gz");
+        setFileEntries(entries);
+        setSourceLabel("directory");
+        setValidationError(hasSkillMd ? null : "Warning: No SKILL.md found at root level");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to read directory");
+        resetUpload();
+      } finally {
+        setProcessing(false);
+      }
+    },
+    [resetUpload],
   );
 
   async function handlePublish() {
@@ -111,7 +260,9 @@ function PublishSkill() {
         },
       });
 
-      const buffer = await file.arrayBuffer();
+      const buffer = await (file instanceof Blob
+        ? file.arrayBuffer()
+        : file.arrayBuffer());
       const bytes = new Uint8Array(buffer);
       let binary = "";
       for (let i = 0; i < bytes.length; i++) {
@@ -124,6 +275,7 @@ function PublishSkill() {
           skillId,
           version,
           tarball: base64,
+          filename,
         },
       });
 
@@ -146,7 +298,7 @@ function PublishSkill() {
     step === 0
       ? nameValid && name.length > 0
       : step === 1
-        ? file !== null && version.length > 0 && !versionError
+        ? file !== null && !validationError?.startsWith("Error") && version.length > 0 && !versionError
         : false;
 
   return (
@@ -269,26 +421,54 @@ function PublishSkill() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[13px]">Tarball (.tar.gz)</Label>
+              <Label className="text-[13px]">Package</Label>
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleFileDrop}
-                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border/50 bg-muted/10 px-6 py-10 text-center transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.02]"
+                className={`flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-all duration-200 ${
+                  file
+                    ? "border-primary/30 bg-primary/[0.02]"
+                    : "border-border/50 bg-muted/10 hover:border-primary/30 hover:bg-primary/[0.02]"
+                }`}
                 onClick={() =>
                   document.getElementById("file-input")?.click()
                 }
               >
-                {file ? (
+                {processing ? (
+                  <>
+                    <div className="flex size-10 items-center justify-center rounded-full border border-border/50 bg-muted/30">
+                      <span className="inline-block size-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                    </div>
+                    <p className="text-[13px] text-muted-foreground">
+                      Processing...
+                    </p>
+                  </>
+                ) : file ? (
                   <>
                     <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
                       <Check className="size-4 text-primary" />
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {file.name}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {filename}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {sourceLabel}
+                      </Badge>
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       {formatBytes(file.size)}
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        resetUpload();
+                      }}
+                      className="text-xs text-muted-foreground/50 underline hover:text-foreground"
+                    >
+                      Remove
+                    </button>
                   </>
                 ) : (
                   <>
@@ -296,10 +476,10 @@ function PublishSkill() {
                       <Upload className="size-4 text-muted-foreground/50" />
                     </div>
                     <p className="text-[13px] text-muted-foreground">
-                      Drop your .tar.gz here or click to browse
+                      Drop .tar.gz, .zip, or a folder here
                     </p>
                     <p className="text-xs text-muted-foreground/50">
-                      Max 5MB
+                      Max 5MB compressed
                     </p>
                   </>
                 )}
@@ -307,11 +487,60 @@ function PublishSkill() {
               <input
                 id="file-input"
                 type="file"
-                accept=".tar.gz,.tgz"
+                accept=".tar.gz,.tgz,.zip"
                 onChange={handleFileSelect}
                 className="hidden"
               />
+              <input
+                id="dir-input"
+                type="file"
+                {...({ webkitdirectory: "" } as React.InputHTMLAttributes<HTMLInputElement>)}
+                onChange={handleDirSelect}
+                className="hidden"
+              />
+
+              {/* Action buttons */}
+              {!file && !processing && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById("file-input")?.click();
+                    }}
+                  >
+                    <Upload className="size-3.5" />
+                    Browse Files
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById("dir-input")?.click();
+                    }}
+                  >
+                    <FolderOpen className="size-3.5" />
+                    Browse Folder
+                  </Button>
+                </div>
+              )}
+
+              {/* Validation warning */}
+              {validationError && (
+                <p className="text-xs text-yellow-500">{validationError}</p>
+              )}
             </div>
+
+            {/* File tree preview */}
+            {fileEntries && fileEntries.length > 0 && (
+              <FileTree files={fileEntries} />
+            )}
           </div>
         </div>
       )}
@@ -363,7 +592,7 @@ function PublishSkill() {
                   <div className="flex justify-between text-[13px]">
                     <span className="text-muted-foreground">Package</span>
                     <span className="font-mono text-xs">
-                      {file.name} ({formatBytes(file.size)})
+                      {filename} ({formatBytes(file.size)})
                     </span>
                   </div>
                 )}
