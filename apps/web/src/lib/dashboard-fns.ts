@@ -1,10 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { eq, and, ne } from "drizzle-orm";
 import { validateSkillName, MAX_BASE64_LENGTH } from "@skvault/shared";
-import { auth } from "./auth/server";
 import { invalidateSessionCache } from "./auth/middleware";
+import { auth } from "./auth/server";
 import {
   getUserStats,
   getRecentActivity,
@@ -22,55 +21,47 @@ import {
 import { skills, apiTokens, users } from "./db/schema";
 import { publishSkillVersion } from "./publish";
 import { sha256Hex } from "./crypto";
-
-function getDb() {
-  return drizzle(env.DB);
-}
-
-async function requireSession(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-  return session;
-}
+import {
+  loggingMiddleware,
+  cloudflareMiddleware,
+  authMiddleware,
+} from "~/lib/middleware";
+import type { LoggedAuthContext } from "~/lib/middleware";
 
 // ─── Dashboard Home ────────────────────────────────────────────────
 
-export const fetchDashboardData = createServerFn({ method: "GET" }).handler(
-  async ({ request }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+export const fetchDashboardData = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .handler(async ({ context }: { context: LoggedAuthContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const [stats, activity, recentSkills] = await Promise.all([
-      getUserStats(db, session.user.id),
-      getRecentActivity(db, session.user.id),
-      listUserSkills(db, session.user.id),
+      getUserStats(db, context.session.user.id),
+      getRecentActivity(db, context.session.user.id),
+      listUserSkills(db, context.session.user.id),
     ]);
     return {
       stats,
       activity,
       recentSkills: recentSkills.slice(0, 5),
     };
-  },
-);
+  });
 
 // ─── Skills ────────────────────────────────────────────────────────
 
-export const fetchUserSkills = createServerFn({ method: "GET" }).handler(
-  async ({ request }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
-    return listUserSkills(db, session.user.id);
-  },
-);
+export const fetchUserSkills = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .handler(async ({ context }: { context: LoggedAuthContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
+    return listUserSkills(db, context.session.user.id);
+  });
 
 export const fetchSkillSettings = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { name: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
-    const result = await getSkillByOwnerAndName(db, session.user.username!, data.name);
-    if (!result || result.skill.ownerId !== session.user.id) {
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { name: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
+    const result = await getSkillByOwnerAndName(db, context.session.user.username!, data.name);
+    if (!result || result.skill.ownerId !== context.session.user.id) {
       throw new Error("Skill not found");
     }
     const versions = await getVersions(db, result.skill.id);
@@ -84,23 +75,22 @@ export const fetchSkillSettings = createServerFn({ method: "GET" })
     };
   });
 
+type UpdateSkillData = {
+  skillId: string;
+  description?: string;
+  visibility?: "public" | "private";
+  repositoryUrl?: string;
+};
+
 export const updateSkillAction = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      skillId: string;
-      description?: string;
-      visibility?: "public" | "private";
-      repositoryUrl?: string;
-    }) => data,
-  )
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
-    // Verify ownership
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .inputValidator((data: UpdateSkillData) => data)
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: UpdateSkillData }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const [skill] = await db
       .select()
       .from(skills)
-      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, session.user.id)))
+      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, context.session.user.id)))
       .limit(1);
     if (!skill) throw new Error("Skill not found");
     const { skillId, ...updateData } = data;
@@ -109,38 +99,37 @@ export const updateSkillAction = createServerFn({ method: "POST" })
   });
 
 export const deleteSkillAction = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { skillId: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { skillId: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const [skill] = await db
       .select()
       .from(skills)
-      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, session.user.id)))
+      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, context.session.user.id)))
       .limit(1);
     if (!skill) throw new Error("Skill not found");
 
     // Clean up R2 tarballs
     const keys = await getTarballKeysForSkill(db, data.skillId);
-    const bucket = env.SKILLS_BUCKET as R2Bucket;
+    const bucket = context.cloudflare.env.SKILLS_BUCKET;
     await Promise.all(keys.map((key) => bucket.delete(key)));
 
     await deleteSkill(db, data.skillId);
     return { success: true };
   });
 
+type UpdateVersionStatusData = {
+  versionId: string;
+  status: "deprecated" | "yanked";
+  message?: string;
+};
+
 export const updateVersionStatusAction = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      versionId: string;
-      status: "deprecated" | "yanked";
-      message?: string;
-    }) => data,
-  )
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
-    // We trust the versionId is for a skill the user owns (verified in UI)
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .inputValidator((data: UpdateVersionStatusData) => data)
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: UpdateVersionStatusData }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     await updateVersionStatus(db, data.versionId, {
       status: data.status,
       deprecationMessage: data.status === "deprecated" ? data.message : undefined,
@@ -151,21 +140,21 @@ export const updateVersionStatusAction = createServerFn({ method: "POST" })
 
 // ─── Publish ───────────────────────────────────────────────────────
 
+type PublishSkillData = {
+  name: string;
+  description: string;
+  visibility: "public" | "private";
+};
+
 export const publishSkillAction = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      name: string;
-      description: string;
-      visibility: "public" | "private";
-    }) => data,
-  )
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .inputValidator((data: PublishSkillData) => data)
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: PublishSkillData }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const skillId = crypto.randomUUID();
     await createSkill(db, {
       id: skillId,
-      ownerId: session.user.id,
+      ownerId: context.session.user.id,
       name: data.name,
       description: data.description,
       visibility: data.visibility,
@@ -173,18 +162,18 @@ export const publishSkillAction = createServerFn({ method: "POST" })
     return { skillId };
   });
 
+type PublishVersionData = {
+  skillId: string;
+  version: string;
+  tarball: string;
+  filename: string;
+};
+
 export const publishVersionAction = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      skillId: string;
-      version: string;
-      tarball: string; // base64 encoded
-      filename: string; // original filename for format detection
-    }) => data,
-  )
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .inputValidator((data: PublishVersionData) => data)
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: PublishVersionData }) => {
+    const db = drizzle(context.cloudflare.env.DB);
 
     // Reject oversized base64 before decoding to prevent memory exhaustion
     if (data.tarball.length > MAX_BASE64_LENGTH) {
@@ -195,11 +184,11 @@ export const publishVersionAction = createServerFn({ method: "POST" })
     const [skill] = await db
       .select()
       .from(skills)
-      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, session.user.id)))
+      .where(and(eq(skills.id, data.skillId), eq(skills.ownerId, context.session.user.id)))
       .limit(1);
     if (!skill) throw new Error("Skill not found");
 
-    const bucket = env.SKILLS_BUCKET as R2Bucket;
+    const bucket = context.cloudflare.env.SKILLS_BUCKET;
 
     // Decode base64 tarball
     const binaryStr = atob(data.tarball);
@@ -212,7 +201,7 @@ export const publishVersionAction = createServerFn({ method: "POST" })
       db,
       bucket,
       skillId: data.skillId,
-      publishedBy: session.user.id,
+      publishedBy: context.session.user.id,
       version: data.version,
       tarball: bytes.buffer as ArrayBuffer,
       filename: data.filename,
@@ -222,10 +211,10 @@ export const publishVersionAction = createServerFn({ method: "POST" })
   });
 
 export const validateSkillNameAction = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { name: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { name: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
 
     const validation = validateSkillName(data.name);
     if (!validation.valid) {
@@ -233,7 +222,7 @@ export const validateSkillNameAction = createServerFn({ method: "GET" })
     }
 
     // Check DB uniqueness for this user
-    const existing = await getSkillByOwnerAndName(db, session.user.username!, data.name);
+    const existing = await getSkillByOwnerAndName(db, context.session.user.username!, data.name);
     if (existing) {
       return { valid: false, error: "You already have a skill with this name" };
     }
@@ -243,19 +232,18 @@ export const validateSkillNameAction = createServerFn({ method: "GET" })
 
 // ─── Tokens ────────────────────────────────────────────────────────
 
-export const fetchUserTokens = createServerFn({ method: "GET" }).handler(
-  async ({ request }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
-    return listUserTokens(db, session.user.id);
-  },
-);
+export const fetchUserTokens = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .handler(async ({ context }: { context: LoggedAuthContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
+    return listUserTokens(db, context.session.user.id);
+  });
 
 export const createTokenAction = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { name: string; scopes?: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { name: string; scopes?: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
 
     // Generate raw token
     const rawToken = `sk_${crypto.randomUUID().replace(/-/g, "")}`;
@@ -264,7 +252,7 @@ export const createTokenAction = createServerFn({ method: "POST" })
 
     await db.insert(apiTokens).values({
       id: crypto.randomUUID(),
-      userId: session.user.id,
+      userId: context.session.user.id,
       name: data.name,
       tokenHash,
       scopes: data.scopes ?? "publish,read",
@@ -276,30 +264,30 @@ export const createTokenAction = createServerFn({ method: "POST" })
   });
 
 export const revokeTokenAction = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { tokenId: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { tokenId: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     await db
       .delete(apiTokens)
-      .where(and(eq(apiTokens.id, data.tokenId), eq(apiTokens.userId, session.user.id)));
+      .where(and(eq(apiTokens.id, data.tokenId), eq(apiTokens.userId, context.session.user.id)));
     return { success: true };
   });
 
 // ─── Account Settings ──────────────────────────────────────────────
 
 export const updateProfileAction = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { displayName?: string; username?: string }) => data)
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
-    const db = getDb();
+  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { displayName?: string; username?: string } }) => {
+    const db = drizzle(context.cloudflare.env.DB);
 
     if (data.username) {
       // Check uniqueness
       const [existing] = await db
         .select({ id: users.id })
         .from(users)
-        .where(and(eq(users.username, data.username), ne(users.id, session.user.id)))
+        .where(and(eq(users.username, data.username), ne(users.id, context.session.user.id)))
         .limit(1);
       if (existing) {
         throw new Error("Username already taken");
@@ -313,20 +301,18 @@ export const updateProfileAction = createServerFn({ method: "POST" })
     await db
       .update(users)
       .set(updateData)
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.id, context.session.user.id));
 
     invalidateSessionCache();
     return { success: true };
   });
 
 export const changePasswordAction = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { currentPassword: string; newPassword: string }) => data,
-  )
-  .handler(async ({ request, data }) => {
-    const session = await requireSession(request!);
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .inputValidator((data: { currentPassword: string; newPassword: string }) => data)
+  .handler(async ({ request, context, data }: { request: Request; context: LoggedAuthContext; data: { currentPassword: string; newPassword: string } }) => {
     await auth.api.changePassword({
-      headers: request!.headers,
+      headers: request.headers,
       body: {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
