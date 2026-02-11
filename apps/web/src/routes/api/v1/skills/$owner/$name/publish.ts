@@ -78,6 +78,7 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name/publish")({
             publishedBy: session.user.id,
             version,
             tarball: buffer,
+            filename: tarball.name,
           });
 
           return new Response(

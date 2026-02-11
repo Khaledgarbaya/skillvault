@@ -4,6 +4,7 @@ import { parseVersion, parseFrontmatter, validateTarballSize, scanSkill } from "
 import { skillVersions, scanResults } from "./db/schema";
 import { sha256Hex } from "./crypto";
 import { parseTarball } from "./tarball";
+import { normalizeUpload, isGzip } from "./upload";
 
 export interface PublishInput {
   db: DrizzleD1Database;
@@ -12,6 +13,7 @@ export interface PublishInput {
   publishedBy: string;
   version: string;
   tarball: ArrayBuffer;
+  filename?: string; // original filename for format detection
 }
 
 export interface PublishResult {
@@ -24,7 +26,13 @@ export interface PublishResult {
 }
 
 export async function publishSkillVersion(input: PublishInput): Promise<PublishResult> {
-  const { db, bucket, skillId, publishedBy, version, tarball } = input;
+  const { db, bucket, skillId, publishedBy, version, filename } = input;
+  let tarball = input.tarball;
+
+  // Normalize format: convert zip → tar.gz if needed
+  if (filename && !isGzip(tarball)) {
+    tarball = await normalizeUpload(tarball, filename);
+  }
 
   // Validate size
   if (!validateTarballSize(tarball.byteLength)) {
