@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { validateSkillName } from "@skvault/shared";
 import { jsonError } from "~/lib/api/response";
 import { listPublicSkills, getSkillByOwnerAndName, createSkill } from "~/lib/db/queries";
 import { users } from "~/lib/db/schema";
-import { eq } from "drizzle-orm";
 import {
   loggingMiddleware,
   cloudflareMiddleware,
@@ -51,7 +51,6 @@ export const Route = createFileRoute("/api/v1/skills/")({
           return jsonError(validation.error!, 400);
         }
 
-        // Look up the user's username
         const [user] = await db
           .select({ username: users.username })
           .from(users)
@@ -78,11 +77,7 @@ export const Route = createFileRoute("/api/v1/skills/")({
         });
 
         return new Response(
-          JSON.stringify({
-            id,
-            name: body.name,
-            owner: user.username,
-          }),
+          JSON.stringify({ id, name: body.name, owner: user.username }),
           { status: 201, headers: { "Content-Type": "application/json" } },
         );
       },
