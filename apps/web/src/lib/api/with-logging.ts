@@ -1,79 +1,77 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { logger } from "~/lib/logger";
+import { env } from "cloudflare:workers";
+import { Logger } from "~/lib/logger";
+import type { WideEvent } from "~/lib/logger";
+import type { CloudflareEnv } from "~/lib/middleware/types";
+
+/**
+ * Send a wide event to PostHog as a server-side capture.
+ * Fire-and-forget — failures are silently ignored.
+ */
+function captureToPostHog(
+  event: WideEvent,
+  phEnv: Pick<CloudflareEnv, "VITE_PUBLIC_POSTHOG_KEY" | "VITE_PUBLIC_POSTHOG_HOST">,
+): void {
+  const { VITE_PUBLIC_POSTHOG_KEY: phKey, VITE_PUBLIC_POSTHOG_HOST: phHost } = phEnv;
+  if (!phKey || !phHost) return;
+
+  const distinctId = (event.user_id as string) ?? (event.request_id as string);
+
+  fetch(`${phHost}/capture/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      api_key: phKey,
+      event: event.outcome === "server_error" ? "server_error" : "api_request",
+      distinct_id: distinctId,
+      properties: { ...event, $lib: "skvault-server" },
+    }),
+  }).catch(() => {});
+}
 
 /**
  * Wide event logging middleware for API routes.
  *
- * Emits a single structured JSON log line per request containing:
- * - Timing (duration_ms)
- * - Request metadata (method, path, query, user_agent)
- * - Auth type detection (session vs token)
- * - Response status + error details for 4xx/5xx
- * - Request ID for tracing across services
- *
- * Apply to API routes via: server.middleware: [loggingMiddleware]
+ * Creates a Logger instance that accumulates context through the request
+ * lifecycle (auth, handler, error), then flushes a single JSON line +
+ * PostHog capture in the finally block.
  */
 export const loggingMiddleware = createMiddleware().server(
   async ({ request, next }) => {
-    const start = Date.now();
-    const url = new URL(request.url);
-
-    const event: Record<string, unknown> = {
-      timestamp: new Date().toISOString(),
-      method: request.method,
-      path: url.pathname,
-      query: url.search || undefined,
-      request_id:
-        request.headers.get("x-request-id") ?? crypto.randomUUID(),
-      user_agent: request.headers.get("user-agent") ?? undefined,
-    };
-
-    // Detect auth type from headers
-    const authHeader = request.headers.get("authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      event.auth_type = "token";
-    } else if (request.headers.get("cookie")?.includes("better-auth")) {
-      event.auth_type = "session";
-    }
-
-    const requestLogger = {
-      info: (data: Record<string, unknown>) => logger.info({ ...event, ...data }),
-      error: (data: Record<string, unknown>) => logger.error({ ...event, ...data }),
-    };
+    const logger = new Logger();
+    logger.initFromRequest(request);
 
     try {
-      const result = await next({ context: { logger: requestLogger } });
+      const result = await next({ context: { logger } });
 
       // Server functions don't return { response } — only API route handlers do
       if (result?.response instanceof Response) {
-        event.status_code = result.response.status;
-        event.outcome =
-          result.response.status < 400 ? "success" : "client_error";
+        const status = result.response.status;
+        logger.setOutcome(status < 400 ? "success" : "client_error", status);
 
-        // For error responses, extract error code from body
-        if (result.response.status >= 400) {
+        // Extract error details from 4xx/5xx response bodies
+        if (status >= 400) {
           try {
             const cloned = result.response.clone();
             const body = (await cloned.json()) as {
               error?: string;
               code?: string;
             };
-            if (body.error) event.error_message = body.error;
-            if (body.code) event.error_code = body.code;
+            if (body.error) logger.set("error_message", body.error);
+            if (body.code) logger.set("error_code", body.code);
           } catch {
             // non-JSON error response
           }
         }
       } else {
-        event.outcome = "success";
+        logger.setOutcome("success");
       }
 
       return result;
     } catch (thrown) {
       // Auth middleware throws Response objects for 401/403
       if (thrown instanceof Response) {
-        event.status_code = thrown.status;
-        event.outcome = "client_error";
+        logger.setOutcome("client_error", thrown.status);
 
         try {
           const cloned = thrown.clone();
@@ -81,8 +79,8 @@ export const loggingMiddleware = createMiddleware().server(
             error?: string;
             code?: string;
           };
-          if (body.error) event.error_message = body.error;
-          if (body.code) event.error_code = body.code;
+          if (body.error) logger.set("error_message", body.error);
+          if (body.code) logger.set("error_code", body.code);
         } catch {
           // non-JSON thrown response
         }
@@ -91,20 +89,13 @@ export const loggingMiddleware = createMiddleware().server(
       }
 
       // Unhandled server error
-      event.status_code = 500;
-      event.outcome = "server_error";
-      if (thrown instanceof Error) {
-        event.error_message = thrown.message;
-        event.error_type = thrown.name;
-      }
+      logger.setOutcome("server_error", 500);
+      logger.setError(thrown);
 
-      logger.error({ ...event, duration_ms: Date.now() - start });
       throw thrown;
     } finally {
-      event.duration_ms = Date.now() - start;
-      if (event.outcome !== "server_error") {
-        logger.info(event);
-      }
+      const event = logger.flush();
+      captureToPostHog(event, env);
     }
   },
 );
