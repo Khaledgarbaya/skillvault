@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
-import { requireAuth, optionalAuth } from "~/lib/auth/middleware";
 import { jsonError } from "~/lib/api/response";
 import {
   getSkillByOwnerAndName,
@@ -11,13 +9,29 @@ import {
   deleteSkill,
   getTarballKeysForSkill,
 } from "~/lib/db/queries";
+import {
+  loggingMiddleware,
+  cloudflareMiddleware,
+  requireScopeFromRequest,
+  optionalScopeFromRequest,
+} from "~/lib/middleware";
+import type { LoggedContext } from "~/lib/middleware";
 
 export const Route = createFileRoute("/api/v1/skills/$owner/$name")({
   server: {
+    middleware: [loggingMiddleware, cloudflareMiddleware],
     handlers: {
-      GET: async ({ request, params }: { request: Request; params: { owner: string; name: string } }) => {
-        const db = drizzle(env.DB);
-        const session = await optionalAuth(request);
+      GET: async ({
+        request,
+        params,
+        context,
+      }: {
+        request: Request;
+        params: { owner: string; name: string };
+        context: LoggedContext;
+      }) => {
+        const db = drizzle(context.cloudflare.env.DB);
+        const authResult = await optionalScopeFromRequest(request, "read");
 
         const result = await getSkillByOwnerAndName(db, params.owner, params.name);
         if (!result) {
@@ -27,7 +41,7 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name")({
         const { skill, ownerUsername } = result;
 
         if (skill.visibility === "private") {
-          if (!session || session.user.id !== skill.ownerId) {
+          if (!authResult || authResult.userId !== skill.ownerId) {
             return jsonError("Skill not found", 404);
           }
         }
@@ -43,16 +57,24 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name")({
         });
       },
 
-      PATCH: async ({ request, params }: { request: Request; params: { owner: string; name: string } }) => {
-        const session = await requireAuth(request);
-        const db = drizzle(env.DB);
+      PATCH: async ({
+        request,
+        params,
+        context,
+      }: {
+        request: Request;
+        params: { owner: string; name: string };
+        context: LoggedContext;
+      }) => {
+        const authResult = await requireScopeFromRequest(request, "publish");
+        const db = drizzle(context.cloudflare.env.DB);
 
         const result = await getSkillByOwnerAndName(db, params.owner, params.name);
         if (!result) {
           return jsonError("Skill not found", 404);
         }
 
-        if (result.skill.ownerId !== session.user.id) {
+        if (result.skill.ownerId !== authResult.userId) {
           return jsonError("Forbidden", 403);
         }
 
@@ -71,22 +93,30 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name")({
         return Response.json({ ok: true });
       },
 
-      DELETE: async ({ request, params }: { request: Request; params: { owner: string; name: string } }) => {
-        const session = await requireAuth(request);
-        const db = drizzle(env.DB);
+      DELETE: async ({
+        request,
+        params,
+        context,
+      }: {
+        request: Request;
+        params: { owner: string; name: string };
+        context: LoggedContext;
+      }) => {
+        const authResult = await requireScopeFromRequest(request, "publish");
+        const db = drizzle(context.cloudflare.env.DB);
 
         const result = await getSkillByOwnerAndName(db, params.owner, params.name);
         if (!result) {
           return jsonError("Skill not found", 404);
         }
 
-        if (result.skill.ownerId !== session.user.id) {
+        if (result.skill.ownerId !== authResult.userId) {
           return jsonError("Forbidden", 403);
         }
 
         const tarballKeys = await getTarballKeysForSkill(db, result.skill.id);
         for (const key of tarballKeys) {
-          await env.SKILLS_BUCKET.delete(key);
+          await context.cloudflare.env.SKILLS_BUCKET.delete(key);
         }
 
         await deleteSkill(db, result.skill.id);

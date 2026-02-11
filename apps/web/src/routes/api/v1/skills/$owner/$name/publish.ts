@@ -1,24 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { validateVersion, MAX_TARBALL_SIZE } from "@skvault/shared";
-import { requireAuth } from "~/lib/auth/middleware";
 import { jsonError } from "~/lib/api/response";
 import { getSkillByOwnerAndName } from "~/lib/db/queries";
 import { publishSkillVersion, PublishError } from "~/lib/publish";
+import {
+  loggingMiddleware,
+  cloudflareMiddleware,
+  requireScopeFromRequest,
+} from "~/lib/middleware";
+import type { LoggedContext } from "~/lib/middleware";
 
 export const Route = createFileRoute("/api/v1/skills/$owner/$name/publish")({
   server: {
+    middleware: [loggingMiddleware, cloudflareMiddleware],
     handlers: {
       POST: async ({
         request,
         params,
+        context,
       }: {
         request: Request;
         params: { owner: string; name: string };
+        context: LoggedContext;
       }) => {
-        const session = await requireAuth(request);
-        const db = drizzle(env.DB);
+        const authResult = await requireScopeFromRequest(request, "publish");
+        const db = drizzle(context.cloudflare.env.DB);
 
         // Resolve skill + verify ownership
         const result = await getSkillByOwnerAndName(db, params.owner, params.name);
@@ -26,7 +33,7 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name/publish")({
           return jsonError("Skill not found", 404);
         }
 
-        if (result.skill.ownerId !== session.user.id) {
+        if (result.skill.ownerId !== authResult.userId) {
           return jsonError("Forbidden", 403);
         }
 
@@ -73,9 +80,9 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name/publish")({
         try {
           const published = await publishSkillVersion({
             db,
-            bucket: env.SKILLS_BUCKET,
+            bucket: context.cloudflare.env.SKILLS_BUCKET,
             skillId: result.skill.id,
-            publishedBy: session.user.id,
+            publishedBy: authResult.userId,
             version,
             tarball: buffer,
             filename: tarball.name,

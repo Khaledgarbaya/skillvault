@@ -21,9 +21,21 @@ export interface AuthContext {
   session: Session;
 }
 
+export interface ScopeAuthContext {
+  userId: string;
+  authType: "session" | "api_key";
+}
+
+export interface OptionalScopeAuthContext {
+  userId: string | null;
+  authType: "session" | "api_key" | null;
+}
+
 export interface LoggingContext {
   logger: Logger;
 }
 
 export type LoggedAuthContext = CloudflareContext & AuthContext & LoggingContext;
+export type LoggedScopeContext = CloudflareContext & ScopeAuthContext & LoggingContext;
+export type LoggedOptionalScopeContext = CloudflareContext & OptionalScopeAuthContext & LoggingContext;
 export type LoggedContext = CloudflareContext & LoggingContext;

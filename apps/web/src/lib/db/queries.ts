@@ -1,6 +1,6 @@
 import { eq, and, like, or, desc, sql, inArray, count } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { skills, skillVersions, scanResults, installEvents, users, apiTokens } from "./schema";
+import { skills, skillVersions, scanResults, installEvents, users } from "./schema";
 
 export async function getSkillByOwnerAndName(
   db: DrizzleD1Database,
@@ -317,21 +317,6 @@ export async function getRecentActivity(db: DrizzleD1Database, userId: string) {
     .slice(0, 10);
 
   return all;
-}
-
-export async function listUserTokens(db: DrizzleD1Database, userId: string) {
-  return db
-    .select({
-      id: apiTokens.id,
-      name: apiTokens.name,
-      scopes: apiTokens.scopes,
-      lastUsedAt: apiTokens.lastUsedAt,
-      expiresAt: apiTokens.expiresAt,
-      createdAt: apiTokens.createdAt,
-    })
-    .from(apiTokens)
-    .where(eq(apiTokens.userId, userId))
-    .orderBy(desc(apiTokens.createdAt));
 }
 
 // ─── Public queries ────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { bearer, apiKey } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../db/schema";
 import {
@@ -17,6 +18,19 @@ export const auth = betterAuth({
   secret: env.AUTH_SECRET,
   baseURL: env.APP_URL,
   trustedOrigins: [env.APP_URL],
+  plugins: [
+    bearer(),
+    apiKey({
+      defaultPrefix: "sk",
+      enableMetadata: true,
+      apiKeyHeaders: ["x-api-key", "authorization"],
+      permissions: {
+        defaultPermissions: {
+          skills: ["publish", "read"],
+        },
+      },
+    }),
+  ],
   user: {
     modelName: "users",
     fields: {

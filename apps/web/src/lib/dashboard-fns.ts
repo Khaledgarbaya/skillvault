@@ -16,11 +16,9 @@ import {
   getTarballKeysForSkill,
   updateVersionStatus,
   createSkill,
-  listUserTokens,
 } from "./db/queries";
-import { skills, apiTokens, users } from "./db/schema";
+import { skills, users } from "./db/schema";
 import { publishSkillVersion } from "./publish";
-import { sha256Hex } from "./crypto";
 import {
   loggingMiddleware,
   cloudflareMiddleware,
@@ -230,49 +228,60 @@ export const validateSkillNameAction = createServerFn({ method: "GET" })
     return { valid: true, error: null };
   });
 
-// ─── Tokens ────────────────────────────────────────────────────────
+// ─── Tokens (via better-auth API key plugin) ──────────────────────
 
 export const fetchUserTokens = createServerFn({ method: "GET" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
-  .handler(async ({ context }: { context: LoggedAuthContext }) => {
-    const db = drizzle(context.cloudflare.env.DB);
-    return listUserTokens(db, context.session.user.id);
+  .handler(async ({ request }: { request: Request; context: LoggedAuthContext }) => {
+    const keys = await auth.api.listApiKeys({
+      headers: request.headers,
+    });
+
+    return (keys as any[]).map((key) => ({
+      id: key.id,
+      name: key.name ?? "Unnamed",
+      scopes: formatPermissions(key.permissions),
+      lastUsedAt: key.lastRefillAt ?? null,
+      expiresAt: key.expiresAt ?? null,
+      createdAt: key.createdAt,
+    }));
   });
 
 export const createTokenAction = createServerFn({ method: "POST" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { name: string; scopes?: string }) => data)
   .handler(async ({ context, data }: { context: LoggedAuthContext; data: { name: string; scopes?: string } }) => {
-    const db = drizzle(context.cloudflare.env.DB);
+    const scopes = (data.scopes ?? "publish,read").split(",").map((s) => s.trim());
 
-    // Generate raw token
-    const rawToken = `sk_${crypto.randomUUID().replace(/-/g, "")}`;
-    const encoded = new TextEncoder().encode(rawToken);
-    const tokenHash = await sha256Hex(encoded.buffer as ArrayBuffer);
-
-    await db.insert(apiTokens).values({
-      id: crypto.randomUUID(),
-      userId: context.session.user.id,
-      name: data.name,
-      tokenHash,
-      scopes: data.scopes ?? "publish,read",
-      createdAt: new Date(),
+    const result = await auth.api.createApiKey({
+      body: {
+        name: data.name,
+        prefix: "sk",
+        userId: context.session.user.id,
+        permissions: { skills: scopes },
+      },
     });
 
-    // Return the raw token — it can only be shown ONCE
-    return { token: rawToken };
+    return { token: result.key };
   });
 
 export const revokeTokenAction = createServerFn({ method: "POST" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { tokenId: string }) => data)
-  .handler(async ({ context, data }: { context: LoggedAuthContext; data: { tokenId: string } }) => {
-    const db = drizzle(context.cloudflare.env.DB);
-    await db
-      .delete(apiTokens)
-      .where(and(eq(apiTokens.id, data.tokenId), eq(apiTokens.userId, context.session.user.id)));
+  .handler(async ({ data }: { context: LoggedAuthContext; data: { tokenId: string } }) => {
+    await auth.api.deleteApiKey({
+      body: { keyId: data.tokenId },
+    });
     return { success: true };
   });
+
+function formatPermissions(permissions: unknown): string {
+  if (!permissions || typeof permissions !== "object") return "publish,read";
+  const perms = permissions as Record<string, string[]>;
+  const skillsPerms = perms.skills;
+  if (Array.isArray(skillsPerms)) return skillsPerms.join(",");
+  return "publish,read";
+}
 
 // ─── Account Settings ──────────────────────────────────────────────
 

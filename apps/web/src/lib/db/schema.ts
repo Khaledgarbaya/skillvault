@@ -162,27 +162,6 @@ export const scanResults = sqliteTable(
   ],
 );
 
-export const apiTokens = sqliteTable(
-  "api_tokens",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    tokenHash: text("token_hash").notNull().unique(),
-    scopes: text("scopes").notNull(),
-    lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
-    expiresAt: integer("expires_at", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-  },
-  (table) => [
-    index("api_tokens_user_idx").on(table.userId),
-  ],
-);
-
 export const installEvents = sqliteTable(
   "install_events",
   {

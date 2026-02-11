@@ -1,16 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import { validateSkillName } from "@skvault/shared";
-import { requireAuth } from "~/lib/auth/middleware";
 import { jsonError } from "~/lib/api/response";
 import { listPublicSkills, getSkillByOwnerAndName, createSkill } from "~/lib/db/queries";
+import { users } from "~/lib/db/schema";
+import { eq } from "drizzle-orm";
+import {
+  loggingMiddleware,
+  cloudflareMiddleware,
+  requireScopeFromRequest,
+} from "~/lib/middleware";
+import type { LoggedContext } from "~/lib/middleware";
 
 export const Route = createFileRoute("/api/v1/skills/")({
   server: {
+    middleware: [loggingMiddleware, cloudflareMiddleware],
     handlers: {
-      GET: async ({ request }: { request: Request }) => {
-        const db = drizzle(env.DB);
+      GET: async ({ request, context }: { request: Request; context: LoggedContext }) => {
+        const db = drizzle(context.cloudflare.env.DB);
         const url = new URL(request.url);
         const q = url.searchParams.get("q") ?? undefined;
         const sort = url.searchParams.get("sort") ?? undefined;
@@ -29,9 +36,9 @@ export const Route = createFileRoute("/api/v1/skills/")({
         });
       },
 
-      POST: async ({ request }: { request: Request }) => {
-        const session = await requireAuth(request);
-        const db = drizzle(env.DB);
+      POST: async ({ request, context }: { request: Request; context: LoggedContext }) => {
+        const authResult = await requireScopeFromRequest(request, "publish");
+        const db = drizzle(context.cloudflare.env.DB);
         const body = (await request.json()) as {
           name: string;
           description?: string;
@@ -44,7 +51,18 @@ export const Route = createFileRoute("/api/v1/skills/")({
           return jsonError(validation.error!, 400);
         }
 
-        const existing = await getSkillByOwnerAndName(db, session.user.username, body.name);
+        // Look up the user's username
+        const [user] = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, authResult.userId))
+          .limit(1);
+
+        if (!user?.username) {
+          return jsonError("User not found", 404);
+        }
+
+        const existing = await getSkillByOwnerAndName(db, user.username, body.name);
         if (existing) {
           return jsonError("A skill with this name already exists", 409);
         }
@@ -52,7 +70,7 @@ export const Route = createFileRoute("/api/v1/skills/")({
         const id = crypto.randomUUID();
         await createSkill(db, {
           id,
-          ownerId: session.user.id,
+          ownerId: authResult.userId,
           name: body.name,
           description: body.description,
           repositoryUrl: body.repositoryUrl,
@@ -63,7 +81,7 @@ export const Route = createFileRoute("/api/v1/skills/")({
           JSON.stringify({
             id,
             name: body.name,
-            owner: session.user.username,
+            owner: user.username,
           }),
           { status: 201, headers: { "Content-Type": "application/json" } },
         );

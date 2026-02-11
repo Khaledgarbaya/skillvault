@@ -15,6 +15,13 @@
       "when": 1770835607385,
       "tag": "0001_add_auth_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771113600000,
+      "tag": "0002_add_apikey_drop_api_tokens",
+      "breakpoints": true
     }
   ]
 }

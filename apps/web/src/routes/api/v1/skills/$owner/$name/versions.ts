@@ -1,16 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
-import { optionalAuth } from "~/lib/auth/middleware";
 import { jsonError } from "~/lib/api/response";
 import { getSkillByOwnerAndName, getVersions } from "~/lib/db/queries";
+import {
+  loggingMiddleware,
+  cloudflareMiddleware,
+  optionalScopeFromRequest,
+} from "~/lib/middleware";
+import type { LoggedContext } from "~/lib/middleware";
 
 export const Route = createFileRoute("/api/v1/skills/$owner/$name/versions")({
   server: {
+    middleware: [loggingMiddleware, cloudflareMiddleware],
     handlers: {
-      GET: async ({ request, params }: { request: Request; params: { owner: string; name: string } }) => {
-        const db = drizzle(env.DB);
-        const session = await optionalAuth(request);
+      GET: async ({
+        request,
+        params,
+        context,
+      }: {
+        request: Request;
+        params: { owner: string; name: string };
+        context: LoggedContext;
+      }) => {
+        const db = drizzle(context.cloudflare.env.DB);
+        const authResult = await optionalScopeFromRequest(request, "read");
 
         const result = await getSkillByOwnerAndName(db, params.owner, params.name);
         if (!result) {
@@ -20,7 +33,7 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name/versions")({
         const { skill } = result;
 
         if (skill.visibility === "private") {
-          if (!session || session.user.id !== skill.ownerId) {
+          if (!authResult || authResult.userId !== skill.ownerId) {
             return jsonError("Skill not found", 404);
           }
         }
