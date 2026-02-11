@@ -45,15 +45,18 @@ Server functions give you types, auth context, and avoid accidentally turning in
 
 ```ts
 import { createServerFn } from "@tanstack/react-start";
+import { loggingMiddleware, cloudflareMiddleware, authMiddleware } from "~/lib/middleware";
+import type { LoggedAuthContext } from "~/lib/middleware";
 
-const getSkills = createServerFn({ method: "GET" }).handler(
-  async ({ request }) => {
-    const session = await requireAuth(request!);
-    // typed, authed, no public URL
-    return db.select().from(skills).where(eq(skills.ownerId, session.user.id));
-  },
-);
+const getSkills = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
+  .handler(async ({ context }: { context: LoggedAuthContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
+    return db.select().from(skills).where(eq(skills.ownerId, context.session.user.id));
+  });
 ```
+
+See [server-functions.md](./server-functions.md) for the full middleware chain pattern and typed context details.
 
 ### Server Route Pattern (API)
 
