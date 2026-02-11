@@ -3,7 +3,6 @@ import { drizzle } from "drizzle-orm/d1";
 import { eq, and, ne } from "drizzle-orm";
 import { validateSkillName, MAX_BASE64_LENGTH } from "@skvault/shared";
 import { invalidateSessionCache } from "./auth/middleware";
-import { auth } from "./auth/server";
 import {
   getUserStats,
   getRecentActivity,
@@ -233,6 +232,7 @@ export const validateSkillNameAction = createServerFn({ method: "GET" })
 export const fetchUserTokens = createServerFn({ method: "GET" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .handler(async ({ request }: { request: Request; context: LoggedAuthContext }) => {
+    const { auth } = await import("./auth/server");
     const keys = await auth.api.listApiKeys({
       headers: request.headers,
     });
@@ -252,6 +252,7 @@ export const createTokenAction = createServerFn({ method: "POST" })
   .inputValidator((data: { name: string; scopes?: string }) => data)
   .handler(async ({ context, data }: { context: LoggedAuthContext; data: { name: string; scopes?: string } }) => {
     const scopes = (data.scopes ?? "publish,read").split(",").map((s) => s.trim());
+    const { auth } = await import("./auth/server");
 
     const result = await auth.api.createApiKey({
       body: {
@@ -269,6 +270,7 @@ export const revokeTokenAction = createServerFn({ method: "POST" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { tokenId: string }) => data)
   .handler(async ({ data }: { context: LoggedAuthContext; data: { tokenId: string } }) => {
+    const { auth } = await import("./auth/server");
     await auth.api.deleteApiKey({
       body: { keyId: data.tokenId },
     });
@@ -320,6 +322,7 @@ export const changePasswordAction = createServerFn({ method: "POST" })
   .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
   .inputValidator((data: { currentPassword: string; newPassword: string }) => data)
   .handler(async ({ request, context, data }: { request: Request; context: LoggedAuthContext; data: { currentPassword: string; newPassword: string } }) => {
+    const { auth } = await import("./auth/server");
     await auth.api.changePassword({
       headers: request.headers,
       body: {
