@@ -10,9 +10,10 @@
     "dev": "pnpm --filter @skvault/web dev",
     "dev:cli": "pnpm --filter ./apps/cli dev",
     "dev:wrangler": "pnpm --filter @skvault/web exec wrangler dev",
-    "test": "echo \"No tests configured yet\"",
+    "test": "pnpm --filter @skvault/shared test",
     "db:generate": "pnpm --filter @skvault/web db:generate",
-    "db:migrate": "pnpm --filter @skvault/web db:migrate"
+    "db:migrate": "pnpm --filter @skvault/web db:migrate",
+    "deploy": "pnpm --filter @skvault/web exec wrangler deploy"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
