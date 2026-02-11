@@ -25,6 +25,7 @@ export function createAuth(env: CloudflareEnv) {
         defaultPrefix: "sk",
         enableMetadata: true,
         apiKeyHeaders: ["x-api-key", "authorization"],
+        rateLimit: { enabled: false },
         permissions: {
           defaultPermissions: {
             skills: ["publish", "read"],
