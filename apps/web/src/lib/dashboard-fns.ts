@@ -242,7 +242,7 @@ export const fetchUserTokens = createServerFn({ method: "GET" })
       id: key.id,
       name: key.name ?? "Unnamed",
       scopes: formatPermissions(key.permissions),
-      lastUsedAt: key.lastRefillAt ?? null,
+      lastUsedAt: key.lastRequest ?? null,
       expiresAt: key.expiresAt ?? null,
       createdAt: key.createdAt,
     }));
