@@ -162,6 +162,36 @@ export const scanResults = sqliteTable(
   ],
 );
 
+export const apikey = sqliteTable("apikey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  start: text("start"),
+  prefix: text("prefix"),
+  key: text("key").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  refillInterval: integer("refillInterval"),
+  refillAmount: integer("refillAmount"),
+  lastRefillAt: integer("lastRefillAt", { mode: "timestamp" }),
+  enabled: integer("enabled", { mode: "boolean" }).default(true),
+  rateLimitEnabled: integer("rateLimitEnabled", { mode: "boolean" }).default(false),
+  rateLimitTimeWindow: integer("rateLimitTimeWindow"),
+  rateLimitMax: integer("rateLimitMax"),
+  requestCount: integer("requestCount").default(0),
+  remaining: integer("remaining"),
+  lastRequest: integer("lastRequest", { mode: "timestamp" }),
+  metadata: text("metadata"),
+  permissions: text("permissions"),
+  expiresAt: integer("expiresAt", { mode: "timestamp" }),
+  createdAt: integer("createdAt", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 export const installEvents = sqliteTable(
   "install_events",
   {
