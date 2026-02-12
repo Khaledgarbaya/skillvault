@@ -1,7 +1,7 @@
 name = "skvault-web"
 compatibility_date = "2025-09-02"
 compatibility_flags = ["nodejs_compat"]
-main = "@tanstack/react-start/server-entry"
+main = "src/worker-entry.ts"
 
 [[d1_databases]]
 binding = "DB"
@@ -23,3 +23,15 @@ custom_domain = true
 
 [vars]
 APP_URL = "https://skvault.dev"
+
+[[queues.producers]]
+queue = "scan-queue"
+binding = "SCAN_QUEUE"
+
+[[queues.consumers]]
+queue = "scan-queue"
+max_batch_size = 1
+max_retries = 3
+
+[ai]
+binding = "AI"

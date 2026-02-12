@@ -1,4 +1,4 @@
-import { eq, and, like, or, desc, sql, inArray, count } from "drizzle-orm";
+import { eq, and, like, not, or, desc, sql, inArray, count } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { skills, skillVersions, scanResults, installEvents, users } from "./schema";
 
@@ -124,6 +124,38 @@ export async function getScanForVersion(db: DrizzleD1Database, versionId: string
     .select()
     .from(scanResults)
     .where(eq(scanResults.skillVersionId, versionId))
+    .orderBy(desc(scanResults.createdAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function getBasicScanForVersion(db: DrizzleD1Database, versionId: string) {
+  const rows = await db
+    .select()
+    .from(scanResults)
+    .where(
+      and(
+        eq(scanResults.skillVersionId, versionId),
+        not(like(scanResults.engineVersion, 'ai-%')),
+      ),
+    )
+    .orderBy(desc(scanResults.createdAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function getAiScanForVersion(db: DrizzleD1Database, versionId: string) {
+  const rows = await db
+    .select()
+    .from(scanResults)
+    .where(
+      and(
+        eq(scanResults.skillVersionId, versionId),
+        like(scanResults.engineVersion, 'ai-%'),
+      ),
+    )
     .orderBy(desc(scanResults.createdAt))
     .limit(1);
 

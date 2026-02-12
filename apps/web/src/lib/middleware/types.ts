@@ -5,6 +5,8 @@ export interface CloudflareEnv {
   DB: D1Database;
   SKILLS_BUCKET: R2Bucket;
   CACHE: KVNamespace;
+  SCAN_QUEUE: Queue;
+  AI: Ai;
   APP_URL: string;
   AUTH_SECRET: string;
   RESEND_API_KEY: string;

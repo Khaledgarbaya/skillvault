@@ -198,6 +198,7 @@ export const publishVersionAction = createServerFn({ method: "POST" })
     const result = await publishSkillVersion({
       db,
       bucket,
+      queue: context.cloudflare.env.SCAN_QUEUE,
       skillId: data.skillId,
       publishedBy: context.session.user.id,
       version: data.version,

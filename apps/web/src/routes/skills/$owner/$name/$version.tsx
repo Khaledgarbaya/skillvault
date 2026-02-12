@@ -1,6 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,19 +7,23 @@ import {
   getSkillByOwnerAndName,
   getVersion,
   getVersions,
-  getScanForVersion,
+  getBasicScanForVersion,
+  getAiScanForVersion,
 } from "~/lib/db/queries";
+import { loggingMiddleware, cloudflareMiddleware } from "~/lib/middleware";
 import { Badge } from "~/components/ui/badge";
 import { CopyButton } from "~/components/copy-button";
 import { ScanReport } from "~/components/scan-report";
 import { formatRelativeTime, formatBytes } from "~/lib/format";
+import type { LoggedContext } from "~/lib/middleware/types";
 
 const fetchVersionDetail = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware])
   .inputValidator(
     (data: { owner: string; name: string; version: string }) => data,
   )
-  .handler(async ({ data }) => {
-    const db = drizzle(env.DB);
+  .handler(async ({ data, context }: { data: { owner: string; name: string; version: string }; context: LoggedContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const result = await getSkillByOwnerAndName(db, data.owner, data.name);
     if (!result || result.skill.visibility !== "public") {
       throw notFound();
@@ -31,8 +34,9 @@ const fetchVersionDetail = createServerFn({ method: "GET" })
       throw notFound();
     }
 
-    const [scan, allVersions] = await Promise.all([
-      getScanForVersion(db, version.id),
+    const [scan, aiScan, allVersions] = await Promise.all([
+      getBasicScanForVersion(db, version.id),
+      getAiScanForVersion(db, version.id),
       getVersions(db, result.skill.id),
     ]);
 
@@ -47,6 +51,7 @@ const fetchVersionDetail = createServerFn({ method: "GET" })
       ownerUsername: result.ownerUsername,
       version,
       scan,
+      aiScan,
       previousVersion,
     };
   });
@@ -77,7 +82,7 @@ export const Route = createFileRoute("/skills/$owner/$name/$version")({
 });
 
 function VersionDetailPage() {
-  const { skill, ownerUsername, version, scan, previousVersion } =
+  const { skill, ownerUsername, version, scan, aiScan, previousVersion } =
     Route.useLoaderData();
 
   const installCommand = `sk add ${ownerUsername}/${skill.name}@${version.version}`;
@@ -207,7 +212,7 @@ function VersionDetailPage() {
             </svg>
             Security Scan
           </h2>
-          <ScanReport scan={scan} />
+          <ScanReport scan={scan} aiScan={aiScan} />
         </div>
 
         {/* README */}

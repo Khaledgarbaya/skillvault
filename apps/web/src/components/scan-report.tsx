@@ -74,41 +74,9 @@ function CategoryCard({
   );
 }
 
-export function ScanReport({ scan }: { scan: ScanData | null }) {
-  if (!scan) {
-    return (
-      <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-muted-foreground/30">
-          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-        </svg>
-        <p className="text-sm text-muted-foreground/50">No scan results available.</p>
-      </div>
-    );
-  }
-
-  if (scan.status === "pending" || scan.status === "running") {
-    return (
-      <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
-        <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-        <p className="text-sm text-muted-foreground/50">
-          Scan is {scan.status}...
-        </p>
-      </div>
-    );
-  }
-
-  if (scan.status === "failed") {
-    return (
-      <div className="rounded-xl border border-destructive/20 bg-destructive/[0.04] py-10 text-center">
-        <p className="text-sm text-muted-foreground">
-          Scan failed. Please try publishing again.
-        </p>
-      </div>
-    );
-  }
-
+function ScanCategoryGrid({ scan }: { scan: ScanData }) {
   return (
-    <div className="space-y-4">
+    <>
       {/* Overall status */}
       <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/30 px-5 py-3.5">
         <ScanStatusDot status={scan.overallStatus} className="size-3" />
@@ -167,6 +135,93 @@ export function ScanReport({ scan }: { scan: ScanData | null }) {
           }
         />
       </div>
+    </>
+  );
+}
+
+function AiScanSection({ aiScan }: { aiScan: ScanData | null }) {
+  if (aiScan === null) return null;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="mb-3 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+          <path d="M20 3v4" /><path d="M22 5h-4" />
+        </svg>
+        AI-Powered Analysis
+      </h3>
+      {(aiScan.status === "pending" || aiScan.status === "running") && (
+        <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
+          <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+          <p className="text-sm text-muted-foreground/50">
+            AI analysis is {aiScan.status}...
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/30">
+            Usually completes in 10-30 seconds
+          </p>
+        </div>
+      )}
+      {aiScan.status === "failed" && (
+        <div className="rounded-xl border border-border/50 bg-card/20 px-5 py-4">
+          <p className="text-[13px] text-muted-foreground/60">
+            AI analysis could not be completed. Pattern-based results above are still valid.
+          </p>
+        </div>
+      )}
+      {aiScan.status === "completed" && <ScanCategoryGrid scan={aiScan} />}
+    </div>
+  );
+}
+
+export function ScanReport({ scan, aiScan }: { scan: ScanData | null; aiScan?: ScanData | null }) {
+  if (!scan) {
+    return (
+      <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-muted-foreground/30">
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        </svg>
+        <p className="text-sm text-muted-foreground/50">No scan results available.</p>
+      </div>
+    );
+  }
+
+  if (scan.status === "pending" || scan.status === "running") {
+    return (
+      <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
+        <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+        <p className="text-sm text-muted-foreground/50">
+          Scan is {scan.status}...
+        </p>
+      </div>
+    );
+  }
+
+  if (scan.status === "failed") {
+    return (
+      <div className="rounded-xl border border-destructive/20 bg-destructive/[0.04] py-10 text-center">
+        <p className="text-sm text-muted-foreground">
+          Scan failed. Please try publishing again.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Pattern-Based Scan */}
+      <div className="space-y-4">
+        <h3 className="mb-3 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          </svg>
+          Pattern-Based Scan
+        </h3>
+        <ScanCategoryGrid scan={scan} />
+      </div>
+
+      {/* AI-Powered Analysis */}
+      {aiScan !== undefined && <AiScanSection aiScan={aiScan} />}
     </div>
   );
 }

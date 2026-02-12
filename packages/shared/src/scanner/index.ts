@@ -11,17 +11,23 @@ export type {
 
 export { scanCode } from "./code-scanner.js";
 export { scanPrompt } from "./prompt-scanner.js";
+export { scanObfuscation } from "./obfuscation-scanner.js";
+export { scanHomoglyphs } from "./homoglyph-scanner.js";
 
 import type { ScanFinding, ScanOutput, ScanStatus, SkillFile, FindingCategory } from "./types.js";
 import { scanCode } from "./code-scanner.js";
 import { scanPrompt } from "./prompt-scanner.js";
+import { scanObfuscation } from "./obfuscation-scanner.js";
+import { scanHomoglyphs } from "./homoglyph-scanner.js";
 
 const CATEGORIES: FindingCategory[] = ["secrets", "permissions", "network", "filesystem"];
 
 export function scanSkill(files: SkillFile[]): ScanOutput {
   const codeFindings = scanCode(files);
   const promptFindings = scanPrompt(files);
-  const allFindings = [...codeFindings, ...promptFindings];
+  const obfuscationFindings = scanObfuscation(files);
+  const homoglyphFindings = scanHomoglyphs(files);
+  const allFindings = [...codeFindings, ...promptFindings, ...obfuscationFindings, ...homoglyphFindings];
 
   // Group findings by category
   const grouped = new Map<FindingCategory, ScanFinding[]>();

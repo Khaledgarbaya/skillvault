@@ -32,6 +32,7 @@ import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ProtectedDashboardTokensRouteImport } from './routes/_protected/dashboard/tokens'
 import { Route as ProtectedDashboardSettingsRouteImport } from './routes/_protected/dashboard/settings'
+import { Route as SkillsOwnerNameIndexRouteImport } from './routes/skills/$owner/$name/index'
 import { Route as ApiV1SkillsIndexRouteImport } from './routes/api/v1/skills/index'
 import { Route as ProtectedDashboardSkillsIndexRouteImport } from './routes/_protected/dashboard/skills/index'
 import { Route as SkillsOwnerNameVersionRouteImport } from './routes/skills/$owner/$name/$version'
@@ -164,6 +165,11 @@ const ProtectedDashboardSettingsRoute =
     path: '/settings',
     getParentRoute: () => ProtectedDashboardRoute,
   } as any)
+const SkillsOwnerNameIndexRoute = SkillsOwnerNameIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SkillsOwnerNameRoute,
+} as any)
 const ApiV1SkillsIndexRoute = ApiV1SkillsIndexRouteImport.update({
   id: '/api/v1/skills/',
   path: '/api/v1/skills/',
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
   '/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
+  '/skills/$owner/$name/': typeof SkillsOwnerNameIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
   '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
@@ -307,7 +314,6 @@ export interface FileRoutesByTo {
   '/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
-  '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
   '/dashboard': typeof ProtectedDashboardIndexRoute
   '/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
   '/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
@@ -316,6 +322,7 @@ export interface FileRoutesByTo {
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
   '/dashboard/skills': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills': typeof ApiV1SkillsIndexRoute
+  '/skills/$owner/$name': typeof SkillsOwnerNameIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
   '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
@@ -357,6 +364,7 @@ export interface FileRoutesById {
   '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
   '/_protected/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
   '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
+  '/skills/$owner/$name/': typeof SkillsOwnerNameIndexRoute
   '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
   '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
   '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
@@ -398,6 +406,7 @@ export interface FileRouteTypes {
     | '/skills/$owner/$name/$version'
     | '/dashboard/skills/'
     | '/api/v1/skills/'
+    | '/skills/$owner/$name/'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
     | '/api/v1/skills/$owner/$name/$version'
@@ -426,7 +435,6 @@ export interface FileRouteTypes {
     | '/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
-    | '/skills/$owner/$name'
     | '/dashboard'
     | '/dashboard/skills/$name'
     | '/dashboard/skills/new'
@@ -435,6 +443,7 @@ export interface FileRouteTypes {
     | '/skills/$owner/$name/$version'
     | '/dashboard/skills'
     | '/api/v1/skills'
+    | '/skills/$owner/$name'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
     | '/api/v1/skills/$owner/$name/$version'
@@ -475,6 +484,7 @@ export interface FileRouteTypes {
     | '/skills/$owner/$name/$version'
     | '/_protected/dashboard/skills/'
     | '/api/v1/skills/'
+    | '/skills/$owner/$name/'
     | '/api/v1/auth/tokens/$id'
     | '/api/v1/skills/$owner/$name'
     | '/api/v1/skills/$owner/$name/$version'
@@ -666,6 +676,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDashboardSettingsRouteImport
       parentRoute: typeof ProtectedDashboardRoute
     }
+    '/skills/$owner/$name/': {
+      id: '/skills/$owner/$name/'
+      path: '/'
+      fullPath: '/skills/$owner/$name/'
+      preLoaderRoute: typeof SkillsOwnerNameIndexRouteImport
+      parentRoute: typeof SkillsOwnerNameRoute
+    }
     '/api/v1/skills/': {
       id: '/api/v1/skills/'
       path: '/api/v1/skills'
@@ -833,10 +850,12 @@ const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 interface SkillsOwnerNameRouteChildren {
   SkillsOwnerNameVersionRoute: typeof SkillsOwnerNameVersionRoute
+  SkillsOwnerNameIndexRoute: typeof SkillsOwnerNameIndexRoute
 }
 
 const SkillsOwnerNameRouteChildren: SkillsOwnerNameRouteChildren = {
   SkillsOwnerNameVersionRoute: SkillsOwnerNameVersionRoute,
+  SkillsOwnerNameIndexRoute: SkillsOwnerNameIndexRoute,
 }
 
 const SkillsOwnerNameRouteWithChildren = SkillsOwnerNameRoute._addFileChildren(

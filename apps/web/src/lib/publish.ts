@@ -14,6 +14,7 @@ export interface PublishInput {
   version: string;
   tarball: ArrayBuffer;
   filename?: string; // original filename for format detection
+  queue?: Queue;
 }
 
 export interface PublishResult {
@@ -23,6 +24,7 @@ export interface PublishResult {
   scanId: string;
   scanStatus: string;
   tarballKey: string;
+  aiScanId: string | null;
 }
 
 export async function publishSkillVersion(input: PublishInput): Promise<PublishResult> {
@@ -114,7 +116,7 @@ export async function publishSkillVersion(input: PublishInput): Promise<PublishR
     db.insert(scanResults).values({
       id: scanId,
       skillVersionId: versionId,
-      engineVersion: "0.1.0",
+      engineVersion: "0.2.0",
       status: "completed",
       secretsStatus: scan.secretsStatus,
       secretsFindings: JSON.stringify(scan.secretsFindings),
@@ -129,6 +131,24 @@ export async function publishSkillVersion(input: PublishInput): Promise<PublishR
     }),
   ]);
 
+  // Enqueue AI scan if queue is available
+  let aiScanId: string | null = null;
+  if (input.queue) {
+    aiScanId = crypto.randomUUID();
+    await db.insert(scanResults).values({
+      id: aiScanId,
+      skillVersionId: versionId,
+      engineVersion: "ai-0.1.0",
+      status: "pending",
+      createdAt: new Date(),
+    });
+    await input.queue.send({
+      scanId: aiScanId,
+      skillVersionId: versionId,
+      tarballKey,
+    });
+  }
+
   return {
     versionId,
     version,
@@ -136,6 +156,7 @@ export async function publishSkillVersion(input: PublishInput): Promise<PublishR
     scanId,
     scanStatus: scan.overallStatus,
     tarballKey,
+    aiScanId,
   };
 }
 

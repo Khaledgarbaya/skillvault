@@ -81,6 +81,7 @@ export const Route = createFileRoute("/api/v1/skills/$owner/$name/publish")({
           const published = await publishSkillVersion({
             db,
             bucket: context.cloudflare.env.SKILLS_BUCKET,
+            queue: context.cloudflare.env.SCAN_QUEUE,
             skillId: result.skill.id,
             publishedBy: authResult.userId,
             version,

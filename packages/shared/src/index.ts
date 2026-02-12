@@ -26,7 +26,7 @@ export {
 
 export type { SkillFrontmatter } from "./validation.js";
 
-export { scanSkill, scanCode, scanPrompt } from "./scanner/index.js";
+export { scanSkill, scanCode, scanPrompt, scanObfuscation, scanHomoglyphs } from "./scanner/index.js";
 
 export type {
   ScanStatus,

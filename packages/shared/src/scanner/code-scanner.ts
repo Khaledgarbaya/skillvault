@@ -145,6 +145,131 @@ const DANGEROUS_PATTERNS: PatternRule[] = [
     category: "filesystem",
     detail: "/etc/passwd access detected",
   },
+
+  // --- Network requests ---
+  {
+    pattern: /fetch\s*\(/,
+    severity: "medium",
+    type: "dangerous-script",
+    category: "network",
+    detail: "Network request via fetch() detected",
+  },
+  {
+    pattern: /axios\.\w+\s*\(/,
+    severity: "medium",
+    type: "dangerous-script",
+    category: "network",
+    detail: "Network request via axios detected",
+  },
+  {
+    pattern: /requests\.(get|post|put|delete|patch)\s*\(/,
+    severity: "medium",
+    type: "dangerous-script",
+    category: "network",
+    detail: "Network request via Python requests detected",
+  },
+  {
+    pattern: /urllib\.request/,
+    severity: "medium",
+    type: "dangerous-script",
+    category: "network",
+    detail: "Network request via urllib detected",
+  },
+
+  // --- Privilege escalation ---
+  {
+    pattern: /\bsudo\b/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "sudo command detected",
+  },
+  {
+    pattern: /chmod\s+777/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "chmod 777 (world-writable) detected",
+  },
+  {
+    pattern: /chmod\s+\+s/,
+    severity: "critical",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "setuid bit (chmod +s) detected",
+  },
+  {
+    pattern: /chown\s+root\b/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "chown root detected",
+  },
+  {
+    pattern: /export\s+PATH=/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "PATH manipulation detected",
+  },
+  {
+    pattern: /export\s+LD_PRELOAD=/,
+    severity: "critical",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "LD_PRELOAD manipulation detected",
+  },
+  {
+    pattern: /export\s+DYLD_LIBRARY_PATH=/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "DYLD_LIBRARY_PATH manipulation detected",
+  },
+
+  // --- Persistence mechanisms ---
+  {
+    pattern: /\bcrontab\b/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "crontab modification detected",
+  },
+  {
+    pattern: /~\/\.(bashrc|zshrc|profile|bash_profile)/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "Shell profile modification detected",
+  },
+  {
+    pattern: /LaunchAgents|LaunchDaemons/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "macOS launch agent/daemon detected",
+  },
+  {
+    pattern: /systemctl\s+enable/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "systemd service persistence detected",
+  },
+  {
+    pattern: /\/etc\/systemd/,
+    severity: "high",
+    type: "dangerous-script",
+    category: "permissions",
+    detail: "systemd directory access detected",
+  },
+  {
+    pattern: /\.git\/hooks\//,
+    severity: "medium",
+    type: "dangerous-script",
+    category: "filesystem",
+    detail: "Git hooks directory access detected",
+  },
 ];
 
 export function scanCode(files: SkillFile[]): ScanFinding[] {
