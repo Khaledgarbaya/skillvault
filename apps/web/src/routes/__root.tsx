@@ -19,8 +19,20 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       { title: "SKVault — Skill Registry for AI Agents" },
+      { name: "theme-color", content: "#09090b" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
+      {
+        rel: "icon",
+        href: "/skvault-logo.svg",
+        type: "image/svg+xml",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/apple-touch-icon.png",
+      },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
