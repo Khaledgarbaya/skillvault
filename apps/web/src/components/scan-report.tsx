@@ -151,39 +151,66 @@ function ScanCategoryGrid({ scan }: { scan: ScanData }) {
 function AiScanSection({ aiScan }: { aiScan: ScanData | null }) {
   if (aiScan === null) return null;
 
+  const aiFindings = aiScan.status === "completed"
+    ? [
+        ...parseFindings(aiScan.secretsFindings),
+        ...parseFindings(aiScan.permissionsFindings),
+        ...parseFindings(aiScan.networkFindings),
+        ...parseFindings(aiScan.filesystemFindings),
+      ]
+    : [];
+
   return (
-    <div className="space-y-4">
-      <div className="mb-3">
-        <h3 className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+    <div className="rounded-xl border border-border/50 bg-card/30 p-4">
+      <div className="flex items-center gap-2.5">
+        <span className="text-muted-foreground/40">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
             <path d="M20 3v4" /><path d="M22 5h-4" />
           </svg>
-          AI-Powered Analysis
-        </h3>
-        <p className="mt-1 pl-[22px] text-[11px] text-muted-foreground/30">
-          LLM-based deep analysis for prompt injection, social engineering, and encoded threats
-        </p>
+        </span>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium">AI-Powered Analysis</span>
+            <div className="flex items-center gap-2">
+              {(aiScan.status === "pending" || aiScan.status === "running") && (
+                <div className="flex items-center gap-2">
+                  <div className="size-3 animate-spin rounded-full border-[1.5px] border-primary/30 border-t-primary" />
+                  <span className="text-[11px] text-muted-foreground/50">
+                    {aiScan.status === "pending" ? "Queued" : "Running"}...
+                  </span>
+                </div>
+              )}
+              {aiScan.status === "failed" && (
+                <span className="text-[11px] text-muted-foreground/40">Could not complete</span>
+              )}
+              {aiScan.status === "completed" && (
+                <>
+                  <ScanStatusDot status={aiScan.overallStatus} />
+                  {aiScan.overallStatus && (
+                    <Badge variant={statusBadge[aiScan.overallStatus]} className="h-5 text-[10px]">
+                      {aiScan.overallStatus === "pass" ? "Pass" : aiScan.overallStatus === "warn" ? "Warn" : "Fail"}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/40">
+            LLM-based deep analysis for prompt injection, social engineering, and encoded threats
+          </p>
+        </div>
       </div>
-      {(aiScan.status === "pending" || aiScan.status === "running") && (
-        <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
-          <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-          <p className="text-sm text-muted-foreground/50">
-            AI analysis is {aiScan.status}...
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground/30">
-            Usually completes in 10-30 seconds
-          </p>
-        </div>
+      {aiFindings.length > 0 && (
+        <ul className="mt-3 space-y-1.5 border-t border-border/30 pt-3">
+          {aiFindings.map((item, i) => (
+            <li key={i} className="flex items-start gap-2 font-mono text-xs leading-relaxed text-muted-foreground">
+              <span className="mt-1.5 block size-1 shrink-0 rounded-full bg-muted-foreground/30" />
+              {item}
+            </li>
+          ))}
+        </ul>
       )}
-      {aiScan.status === "failed" && (
-        <div className="rounded-xl border border-border/50 bg-card/20 px-5 py-4">
-          <p className="text-[13px] text-muted-foreground/60">
-            AI analysis could not be completed. Pattern-based results above are still valid.
-          </p>
-        </div>
-      )}
-      {aiScan.status === "completed" && <ScanCategoryGrid scan={aiScan} />}
     </div>
   );
 }
