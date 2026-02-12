@@ -66,6 +66,15 @@ function HomePage() {
 
         <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pb-32 sm:pt-28">
           <div className="mx-auto max-w-3xl">
+            {/* Logo */}
+            <div className="animate-slide-up mb-6 flex justify-center">
+              <img
+                src="/skvault-logo.svg"
+                alt="SKVault"
+                className="size-20 rounded-2xl sm:size-24"
+              />
+            </div>
+
             {/* Version badge */}
             <div className="animate-slide-up mb-8 flex justify-center">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-3.5 py-1">
