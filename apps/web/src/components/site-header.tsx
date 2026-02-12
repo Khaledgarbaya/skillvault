@@ -28,9 +28,11 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-8">
           <Link to="/" className="group flex items-center gap-2.5">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 font-mono text-xs font-bold text-primary transition-colors group-hover:bg-primary/20">
-              SK
-            </div>
+            <img
+              src="/skvault-logo.svg"
+              alt="SKVault"
+              className="size-7 rounded-md transition-opacity group-hover:opacity-80"
+            />
             <span className="text-sm font-semibold tracking-wide">SKVault</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
@@ -40,14 +42,6 @@ export function SiteHeader() {
             >
               Explore
             </Link>
-            <a
-              href="https://github.com/anthropics/skillvault"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              GitHub
-            </a>
           </nav>
         </div>
 
@@ -120,14 +114,6 @@ export function SiteHeader() {
             >
               Explore
             </Link>
-            <a
-              href="https://github.com/anthropics/skillvault"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-            >
-              GitHub
-            </a>
             {user ? (
               <>
                 <Link

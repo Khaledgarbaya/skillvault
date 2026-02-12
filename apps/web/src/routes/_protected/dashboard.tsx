@@ -51,9 +51,11 @@ function DashboardLayout() {
     <nav className="flex h-full flex-col">
       <div className="flex h-14 items-center border-b border-border/50 px-4">
         <Link to="/" className="group flex items-center gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 font-mono text-xs font-bold text-primary transition-colors group-hover:bg-primary/20">
-            SK
-          </div>
+          <img
+            src="/skvault-logo.svg"
+            alt="SKVault"
+            className="size-7 rounded-md transition-opacity group-hover:opacity-80"
+          />
           <span className="text-sm font-semibold tracking-wide">SKVault</span>
         </Link>
       </div>

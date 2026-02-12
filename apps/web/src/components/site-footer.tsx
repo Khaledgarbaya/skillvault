@@ -8,9 +8,11 @@ export function SiteFooter() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="mb-3 flex items-center gap-2.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-primary/10 font-mono text-[10px] font-bold text-primary">
-                SK
-              </div>
+              <img
+                src="/skvault-logo.svg"
+                alt="SKVault"
+                className="size-6 rounded-md"
+              />
               <span className="text-sm font-semibold tracking-wide">SKVault</span>
             </div>
             <p className="max-w-xs text-[13px] leading-relaxed text-muted-foreground">
@@ -37,24 +39,6 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {/* Community */}
-          <div>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Community
-            </h4>
-            <ul className="space-y-2 text-[13px]">
-              <li>
-                <a
-                  href="https://github.com/anthropics/skillvault"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  GitHub
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-6 sm:flex-row">
