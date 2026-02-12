@@ -34,11 +34,13 @@ function parseFindings(raw: string | null): string[] {
 
 function CategoryCard({
   title,
+  description,
   status,
   findings,
   icon,
 }: {
   title: string;
+  description: string;
   status: "pass" | "fail" | "warn" | null;
   findings: string | null;
   icon: React.ReactNode;
@@ -60,6 +62,9 @@ function CategoryCard({
           )}
         </div>
       </div>
+      <p className="mt-1.5 pl-[26px] text-[11px] leading-relaxed text-muted-foreground/40">
+        {description}
+      </p>
       {items.length > 0 && (
         <ul className="mt-3 space-y-1.5 border-t border-border/30 pt-3">
           {items.map((item, i) => (
@@ -96,6 +101,7 @@ function ScanCategoryGrid({ scan }: { scan: ScanData }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <CategoryCard
           title="Secrets"
+          description="API keys, tokens, passwords, and hardcoded credentials"
           status={scan.secretsStatus}
           findings={scan.secretsFindings}
           icon={
@@ -106,6 +112,7 @@ function ScanCategoryGrid({ scan }: { scan: ScanData }) {
         />
         <CategoryCard
           title="Permissions"
+          description="Privilege escalation, sudo, chmod, and environment manipulation"
           status={scan.permissionsStatus}
           findings={scan.permissionsFindings}
           icon={
@@ -116,6 +123,7 @@ function ScanCategoryGrid({ scan }: { scan: ScanData }) {
         />
         <CategoryCard
           title="Network"
+          description="Outbound HTTP requests, external URLs, and data exfiltration"
           status={scan.networkStatus}
           findings={scan.networkFindings}
           icon={
@@ -126,6 +134,7 @@ function ScanCategoryGrid({ scan }: { scan: ScanData }) {
         />
         <CategoryCard
           title="Filesystem"
+          description="Path traversal, dangerous file ops, and persistence mechanisms"
           status={scan.filesystemStatus}
           findings={scan.filesystemFindings}
           icon={
@@ -144,13 +153,18 @@ function AiScanSection({ aiScan }: { aiScan: ScanData | null }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="mb-3 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-          <path d="M20 3v4" /><path d="M22 5h-4" />
-        </svg>
-        AI-Powered Analysis
-      </h3>
+      <div className="mb-3">
+        <h3 className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+            <path d="M20 3v4" /><path d="M22 5h-4" />
+          </svg>
+          AI-Powered Analysis
+        </h3>
+        <p className="mt-1 pl-[22px] text-[11px] text-muted-foreground/30">
+          LLM-based deep analysis for prompt injection, social engineering, and encoded threats
+        </p>
+      </div>
       {(aiScan.status === "pending" || aiScan.status === "running") && (
         <div className="rounded-xl border border-border/50 bg-card/20 py-10 text-center">
           <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
@@ -211,12 +225,17 @@ export function ScanReport({ scan, aiScan }: { scan: ScanData | null; aiScan?: S
     <div className="space-y-6">
       {/* Pattern-Based Scan */}
       <div className="space-y-4">
-        <h3 className="mb-3 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-          </svg>
-          Pattern-Based Scan
-        </h3>
+        <div className="mb-3">
+          <h3 className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+            </svg>
+            Pattern-Based Scan
+          </h3>
+          <p className="mt-1 pl-[22px] text-[11px] text-muted-foreground/30">
+            Regex analysis for known dangerous patterns, obfuscation, and homoglyph attacks
+          </p>
+        </div>
         <ScanCategoryGrid scan={scan} />
       </div>
 
