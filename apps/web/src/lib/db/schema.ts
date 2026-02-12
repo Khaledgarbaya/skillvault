@@ -120,6 +120,7 @@ export const skillVersions = sqliteTable(
       .default("active"),
     deprecationMessage: text("deprecation_message"),
     yankReason: text("yank_reason"),
+    fileManifest: text("file_manifest"),
     publishedBy: text("published_by")
       .notNull()
       .references(() => users.id),

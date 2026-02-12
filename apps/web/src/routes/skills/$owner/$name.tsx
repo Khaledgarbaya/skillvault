@@ -1,6 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -9,30 +8,48 @@ import {
   getLatestVersion,
   getVersions,
   getScanForVersion,
+  getInstallsByAgent,
+  getFirstPublishedDate,
 } from "~/lib/db/queries";
+import { loggingMiddleware, cloudflareMiddleware } from "~/lib/middleware";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
 import { CopyButton } from "~/components/copy-button";
 import { ScanReport } from "~/components/scan-report";
 import { ScanStatusDot } from "~/components/scan-status-dot";
-import { formatRelativeTime, formatDownloads, formatBytes } from "~/lib/format";
+import { FileTree } from "~/components/file-tree";
+import {
+  formatRelativeTime,
+  formatDownloads,
+  formatBytes,
+  formatDate,
+} from "~/lib/format";
+import type { LoggedContext } from "~/lib/middleware/types";
 
 const fetchSkillDetail = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware, cloudflareMiddleware])
   .inputValidator((data: { owner: string; name: string }) => data)
-  .handler(async ({ data }) => {
-    const db = drizzle(env.DB);
+  .handler(async ({ data, context }: { data: { owner: string; name: string }; context: LoggedContext }) => {
+    const db = drizzle(context.cloudflare.env.DB);
     const result = await getSkillByOwnerAndName(db, data.owner, data.name);
     if (!result || result.skill.visibility !== "public") {
       throw notFound();
     }
 
-    const [latestVersion, versions] = await Promise.all([
-      getLatestVersion(db, result.skill.id),
-      getVersions(db, result.skill.id),
-    ]);
+    const [latestVersion, versions, installsByAgent, firstPublished] =
+      await Promise.all([
+        getLatestVersion(db, result.skill.id),
+        getVersions(db, result.skill.id),
+        getInstallsByAgent(db, result.skill.id),
+        getFirstPublishedDate(db, result.skill.id),
+      ]);
 
     const scan = latestVersion
       ? await getScanForVersion(db, latestVersion.id)
+      : null;
+
+    const fileManifest = latestVersion?.fileManifest
+      ? (JSON.parse(latestVersion.fileManifest) as { name: string; size: number }[])
       : null;
 
     return {
@@ -41,6 +58,9 @@ const fetchSkillDetail = createServerFn({ method: "GET" })
       latestVersion,
       versions,
       scan,
+      installsByAgent,
+      firstPublished,
+      fileManifest,
     };
   });
 
@@ -64,8 +84,16 @@ export const Route = createFileRoute("/skills/$owner/$name")({
 });
 
 function SkillDetailPage() {
-  const { skill, ownerUsername, latestVersion, versions, scan } =
-    Route.useLoaderData();
+  const {
+    skill,
+    ownerUsername,
+    latestVersion,
+    versions,
+    scan,
+    installsByAgent,
+    firstPublished,
+    fileManifest,
+  } = Route.useLoaderData();
 
   const installCommand = `sk add ${ownerUsername}/${skill.name}`;
 
@@ -74,51 +102,59 @@ function SkillDetailPage() {
       <div className="dot-grid absolute inset-0 h-64" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-10 lg:grid-cols-[1fr_260px]">
+        {/* Breadcrumb */}
+        <nav className="mb-6 flex items-center gap-1.5 font-mono text-xs text-muted-foreground/50">
+          <Link to="/explore" className="hover:text-muted-foreground">
+            explore
+          </Link>
+          <span>/</span>
+          <span className="text-muted-foreground">{ownerUsername}</span>
+          <span>/</span>
+          <span className="text-foreground">{skill.name}</span>
+        </nav>
+
+        {/* Header */}
+        <div className="mb-6">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.06] font-mono text-xs font-bold text-primary">
+              {ownerUsername.charAt(0).toUpperCase()}
+            </div>
+            <h1 className="text-xl font-bold sm:text-2xl">
+              <span className="text-muted-foreground">{ownerUsername}/</span>
+              <span className="text-glow text-primary">{skill.name}</span>
+            </h1>
+            {scan && <ScanStatusDot status={scan.overallStatus} className="size-3" />}
+          </div>
+          {skill.description && (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {skill.description}
+            </p>
+          )}
+        </div>
+
+        {/* Install box */}
+        <div className="mb-8 flex items-center gap-2 rounded-lg border border-border/50 bg-card/50 px-4 py-3 font-mono text-[13px]">
+          <span className="text-primary">$</span>
+          <code className="flex-1 select-all text-foreground/80">{installCommand}</code>
+          <CopyButton value={installCommand} />
+        </div>
+
+        {/* Main grid */}
+        <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
           {/* ── Main column ── */}
           <div className="min-w-0">
-            {/* Breadcrumb */}
-            <nav className="mb-6 flex items-center gap-1.5 font-mono text-xs text-muted-foreground/50">
-              <Link to="/explore" className="hover:text-muted-foreground">
-                explore
-              </Link>
-              <span>/</span>
-              <span className="text-muted-foreground">{ownerUsername}</span>
-              <span>/</span>
-              <span className="text-foreground">{skill.name}</span>
-            </nav>
-
-            {/* Header */}
-            <div className="mb-6">
-              <div className="mb-2 flex items-center gap-3">
-                <div className="flex size-9 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.06] font-mono text-xs font-bold text-primary">
-                  {ownerUsername.charAt(0).toUpperCase()}
-                </div>
-                <h1 className="text-xl font-bold sm:text-2xl">
-                  <span className="text-muted-foreground">{ownerUsername}/</span>
-                  <span className="text-glow text-primary">{skill.name}</span>
-                </h1>
-                {scan && <ScanStatusDot status={scan.overallStatus} className="size-3" />}
-              </div>
-              {skill.description && (
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {skill.description}
-                </p>
-              )}
-            </div>
-
-            {/* Install box */}
-            <div className="mb-8 flex items-center gap-2 rounded-lg border border-border/50 bg-card/50 px-4 py-3 font-mono text-[13px]">
-              <span className="text-primary">$</span>
-              <code className="flex-1 select-all text-foreground/80">{installCommand}</code>
-              <CopyButton value={installCommand} />
-            </div>
-
-            {/* Tabs */}
             <Tabs defaultValue="readme">
               <TabsList className="h-9 rounded-lg bg-card/80">
                 <TabsTrigger value="readme" className="rounded-md text-xs">
                   README
+                </TabsTrigger>
+                <TabsTrigger value="files" className="rounded-md text-xs">
+                  Files
+                  {latestVersion && (
+                    <span className="ml-1.5 rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
+                      {latestVersion.fileCount}
+                    </span>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="versions" className="rounded-md text-xs">
                   Versions
@@ -142,6 +178,32 @@ function SkillDetailPage() {
                   <div className="py-12 text-center">
                     <p className="text-sm text-muted-foreground/60">
                       No README available for this skill.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="files" className="mt-6">
+                {fileManifest ? (
+                  <FileTree
+                    files={fileManifest.map((f) => ({
+                      path: f.name,
+                      size: f.size,
+                    }))}
+                  />
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-border/50 bg-muted/30">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-muted-foreground/60">
+                      File listing not available for this version.
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground/40">
+                      Versions published after the file manifest update will show their contents here.
                     </p>
                   </div>
                 )}
@@ -202,58 +264,81 @@ function SkillDetailPage() {
           </div>
 
           {/* ── Sidebar ── */}
-          <aside className="space-y-5">
-            <div className="rounded-xl border border-border/50 bg-card/30 p-5">
-              <h3 className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-                Package Info
-              </h3>
-              <dl className="space-y-4 text-sm">
-                <SidebarItem label="Downloads">
-                  <span className="font-mono font-medium">
-                    {formatDownloads(skill.downloadCount)}
-                  </span>
-                </SidebarItem>
-                {latestVersion && (
-                  <SidebarItem label="Latest">
-                    <Badge variant="secondary" className="h-5 rounded border-border/50 font-mono text-[10px] font-normal">
-                      v{latestVersion.version}
-                    </Badge>
-                  </SidebarItem>
-                )}
-                <SidebarItem label="Published">
-                  <span className="font-mono text-xs">
-                    {formatRelativeTime(skill.createdAt)}
-                  </span>
-                </SidebarItem>
-                {latestVersion && (
-                  <>
-                    <SidebarItem label="Files">
-                      <span className="font-mono text-xs">{latestVersion.fileCount}</span>
-                    </SidebarItem>
-                    <SidebarItem label="Size">
-                      <span className="font-mono text-xs">
-                        {formatBytes(latestVersion.totalSizeBytes)}
-                      </span>
-                    </SidebarItem>
-                  </>
-                )}
-                {skill.repositoryUrl && (
-                  <SidebarItem label="Source">
-                    <a
-                      href={skill.repositoryUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:underline"
+          <aside className="space-y-4">
+            {/* Total Installs */}
+            <SidebarSection label="Total Installs">
+              <span className="font-mono text-2xl font-bold tracking-tight text-foreground">
+                {formatDownloads(skill.downloadCount)}
+              </span>
+            </SidebarSection>
+
+            {/* Latest Version */}
+            {latestVersion && (
+              <SidebarSection label="Latest Version">
+                <Badge
+                  variant="secondary"
+                  className="h-5 rounded border-border/50 font-mono text-[10px] font-normal"
+                >
+                  v{latestVersion.version}
+                </Badge>
+              </SidebarSection>
+            )}
+
+            {/* First Published */}
+            {firstPublished && (
+              <SidebarSection label="First Published">
+                <span className="font-mono text-xs text-foreground/80">
+                  {formatDate(firstPublished)}
+                </span>
+              </SidebarSection>
+            )}
+
+            {/* Size */}
+            {latestVersion && (
+              <SidebarSection label="Size">
+                <span className="font-mono text-xs text-foreground/80">
+                  {formatBytes(latestVersion.totalSizeBytes)} &middot; {latestVersion.fileCount} files
+                </span>
+              </SidebarSection>
+            )}
+
+            {/* Repository */}
+            {skill.repositoryUrl && (
+              <SidebarSection label="Repository">
+                <a
+                  href={skill.repositoryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:underline"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4" /><path d="M9 18c-4.51 2-5-2-7-2" />
+                  </svg>
+                  Repository
+                </a>
+              </SidebarSection>
+            )}
+
+            {/* Installed On — agent breakdown */}
+            {installsByAgent.length > 0 && (
+              <SidebarSection label="Installed On">
+                <div className="w-full space-y-2">
+                  {installsByAgent.map((row) => (
+                    <div
+                      key={row.agentType}
+                      className="flex items-center justify-between"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4" /><path d="M9 18c-4.51 2-5-2-7-2" />
-                      </svg>
-                      Repository
-                    </a>
-                  </SidebarItem>
-                )}
-              </dl>
-            </div>
+                      <span className="font-mono text-xs text-foreground/80">
+                        {row.agentType}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-foreground/50">
+                        {formatDownloads(row.count)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </SidebarSection>
+            )}
           </aside>
         </div>
       </div>
@@ -261,7 +346,7 @@ function SkillDetailPage() {
   );
 }
 
-function SidebarItem({
+function SidebarSection({
   label,
   children,
 }: {
@@ -269,9 +354,11 @@ function SidebarItem({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <dt className="text-xs text-muted-foreground/50">{label}</dt>
-      <dd>{children}</dd>
+    <div className="rounded-xl border border-border/50 bg-card/30 px-4 py-3">
+      <div className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+        {label}
+      </div>
+      <div>{children}</div>
     </div>
   );
 }

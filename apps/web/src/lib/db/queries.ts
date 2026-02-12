@@ -200,6 +200,33 @@ export async function countPublicSkills(
   return rows[0]?.total ?? 0;
 }
 
+export async function getInstallsByAgent(db: DrizzleD1Database, skillId: string) {
+  const rows = await db
+    .select({
+      agentType: installEvents.agentType,
+      count: count(),
+    })
+    .from(installEvents)
+    .innerJoin(skillVersions, eq(skillVersions.id, installEvents.skillVersionId))
+    .where(eq(skillVersions.skillId, skillId))
+    .groupBy(installEvents.agentType)
+    .orderBy(desc(count()))
+    .limit(6);
+
+  return rows;
+}
+
+export async function getFirstPublishedDate(db: DrizzleD1Database, skillId: string) {
+  const rows = await db
+    .select({ createdAt: skillVersions.createdAt })
+    .from(skillVersions)
+    .where(eq(skillVersions.skillId, skillId))
+    .orderBy(skillVersions.createdAt)
+    .limit(1);
+
+  return rows[0]?.createdAt ?? null;
+}
+
 // ─── Dashboard queries ─────────────────────────────────────────────
 
 export async function listUserSkills(db: DrizzleD1Database, userId: string) {

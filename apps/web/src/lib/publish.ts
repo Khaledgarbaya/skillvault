@@ -106,6 +106,7 @@ export async function publishSkillVersion(input: PublishInput): Promise<PublishR
       frontmatter: JSON.stringify(frontmatter),
       fileCount: contents.fileCount,
       totalSizeBytes: contents.totalSizeBytes,
+      fileManifest: JSON.stringify(contents.files),
       status: "active",
       publishedBy,
       createdAt: new Date(),

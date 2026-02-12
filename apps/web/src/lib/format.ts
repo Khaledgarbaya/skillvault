@@ -36,3 +36,14 @@ export function formatBytes(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
+
+const dtf = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+export function formatDate(date: Date | string | number): string {
+  const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+  return dtf.format(d);
+}
