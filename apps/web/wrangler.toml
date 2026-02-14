@@ -9,12 +9,8 @@ database_name = "skvault-db"
 database_id = "fb639fe7-fa5a-4196-bfb7-029e80640a73"
 migrations_dir = "./drizzle"
 
-[[r2_buckets]]
-binding = "SKILLS_BUCKET"
-bucket_name = "skvault-skills"
-
 [[kv_namespaces]]
-binding = "CACHE"
+binding = "BADGE_CACHE"
 id = "59fc0ff98a974dd388dd93269f4db115"
 
 [[routes]]
@@ -23,15 +19,3 @@ custom_domain = true
 
 [vars]
 APP_URL = "https://skvault.dev"
-
-[[queues.producers]]
-queue = "scan-queue"
-binding = "SCAN_QUEUE"
-
-[[queues.consumers]]
-queue = "scan-queue"
-max_batch_size = 1
-max_retries = 3
-
-[ai]
-binding = "AI"

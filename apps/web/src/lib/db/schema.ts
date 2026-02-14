@@ -1,4 +1,7 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+
+// ─── Auth tables (kept for future cloud dashboard) ──────────────────
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -71,98 +74,7 @@ export const verifications = sqliteTable("verifications", {
     .$defaultFn(() => new Date()),
 });
 
-export const skills = sqliteTable(
-  "skills",
-  {
-    id: text("id").primaryKey(),
-    ownerId: text("owner_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    description: text("description"),
-    repositoryUrl: text("repository_url"),
-    visibility: text("visibility", { enum: ["public", "private"] })
-      .notNull()
-      .default("public"),
-    downloadCount: integer("download_count").notNull().default(0),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-  },
-  (table) => [
-    uniqueIndex("skills_owner_name_idx").on(table.ownerId, table.name),
-    index("skills_owner_idx").on(table.ownerId),
-  ],
-);
-
-export const skillVersions = sqliteTable(
-  "skill_versions",
-  {
-    id: text("id").primaryKey(),
-    skillId: text("skill_id")
-      .notNull()
-      .references(() => skills.id, { onDelete: "cascade" }),
-    version: text("version").notNull(),
-    versionMajor: integer("version_major").notNull(),
-    versionMinor: integer("version_minor").notNull(),
-    versionPatch: integer("version_patch").notNull(),
-    contentHash: text("content_hash").notNull(),
-    tarballKey: text("tarball_key").notNull(),
-    skillMdContent: text("skill_md_content"),
-    frontmatter: text("frontmatter"),
-    fileCount: integer("file_count").notNull(),
-    totalSizeBytes: integer("total_size_bytes").notNull(),
-    status: text("status", { enum: ["active", "deprecated", "yanked"] })
-      .notNull()
-      .default("active"),
-    deprecationMessage: text("deprecation_message"),
-    yankReason: text("yank_reason"),
-    fileManifest: text("file_manifest"),
-    publishedBy: text("published_by")
-      .notNull()
-      .references(() => users.id),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-  },
-  (table) => [
-    uniqueIndex("skill_versions_skill_version_idx").on(table.skillId, table.version),
-    index("skill_versions_skill_idx").on(table.skillId),
-  ],
-);
-
-export const scanResults = sqliteTable(
-  "scan_results",
-  {
-    id: text("id").primaryKey(),
-    skillVersionId: text("skill_version_id")
-      .notNull()
-      .references(() => skillVersions.id, { onDelete: "cascade" }),
-    engineVersion: text("engine_version").notNull(),
-    status: text("status", { enum: ["pending", "running", "completed", "failed"] })
-      .notNull()
-      .default("pending"),
-    secretsStatus: text("secrets_status", { enum: ["pass", "fail", "warn"] }),
-    secretsFindings: text("secrets_findings"),
-    permissionsStatus: text("permissions_status", { enum: ["pass", "fail", "warn"] }),
-    permissionsFindings: text("permissions_findings"),
-    networkStatus: text("network_status", { enum: ["pass", "fail", "warn"] }),
-    networkFindings: text("network_findings"),
-    filesystemStatus: text("filesystem_status", { enum: ["pass", "fail", "warn"] }),
-    filesystemFindings: text("filesystem_findings"),
-    overallStatus: text("overall_status", { enum: ["pass", "fail", "warn"] }),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-  },
-  (table) => [
-    index("scan_results_version_idx").on(table.skillVersionId),
-  ],
-);
-
+// better-auth apikey table (kept for future dashboard auth)
 export const apikey = sqliteTable("apikey", {
   id: text("id").primaryKey(),
   name: text("name"),
@@ -193,19 +105,30 @@ export const apikey = sqliteTable("apikey", {
     .$defaultFn(() => new Date()),
 });
 
-export const installEvents = sqliteTable(
-  "install_events",
+// ─── Scan records (new) ─────────────────────────────────────────────
+
+export const scanRecords = sqliteTable(
+  "scan_records",
   {
     id: text("id").primaryKey(),
-    skillVersionId: text("skill_version_id")
+    provider: text("provider").notNull(),
+    owner: text("owner").notNull(),
+    repo: text("repo").notNull(),
+    ref: text("ref"),
+    status: text("status", { enum: ["pass", "warn", "fail"] }).notNull(),
+    findingsCount: integer("findings_count").notNull().default(0),
+    criticalCount: integer("critical_count").notNull().default(0),
+    highCount: integer("high_count").notNull().default(0),
+    mediumCount: integer("medium_count").notNull().default(0),
+    lowCount: integer("low_count").notNull().default(0),
+    findings: text("findings"),
+    scanDuration: integer("scan_duration"),
+    engineVersion: text("engine_version").notNull(),
+    createdAt: text("created_at")
       .notNull()
-      .references(() => skillVersions.id, { onDelete: "cascade" }),
-    agentType: text("agent_type").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(() => new Date()),
+      .default(sql`(datetime('now'))`),
   },
   (table) => [
-    index("install_events_version_idx").on(table.skillVersionId),
+    index("idx_scan_repo").on(table.provider, table.owner, table.repo),
   ],
 );

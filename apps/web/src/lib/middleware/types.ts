@@ -3,10 +3,7 @@ import type { Logger } from "~/lib/logger";
 
 export interface CloudflareEnv {
   DB: D1Database;
-  SKILLS_BUCKET: R2Bucket;
-  CACHE: KVNamespace;
-  SCAN_QUEUE: Queue;
-  AI: Ai;
+  BADGE_CACHE: KVNamespace;
   APP_URL: string;
   AUTH_SECRET: string;
   RESEND_API_KEY: string;
