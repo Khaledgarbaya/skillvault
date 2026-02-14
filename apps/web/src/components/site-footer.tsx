@@ -6,7 +6,7 @@ export function SiteFooter() {
           <div className="flex items-center gap-2.5">
             <img
               src="/skvault-logo.svg"
-              alt="skscan"
+              alt="SKVault"
               className="size-5 rounded-md"
             />
             <span className="font-mono text-[11px] text-muted-foreground">
@@ -37,7 +37,7 @@ export function SiteFooter() {
             Made by Khaled Garbaya
           </span>
           <span className="text-[11px] text-muted-foreground/40">
-            &copy; {new Date().getFullYear()} skscan &middot; MIT License
+            &copy; {new Date().getFullYear()} SKVault &middot; MIT License
           </span>
         </div>
       </div>

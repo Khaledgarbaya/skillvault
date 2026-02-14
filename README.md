@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="apps/web/public/skvault-logo.svg" width="64" height="64" alt="skscan logo" />
+  <img src="apps/web/public/skvault-logo.svg" width="64" height="64" alt="SKVault logo" />
 </p>
 
 <h1 align="center">skscan</h1>
+
+<p align="center">A <strong>SKVault</strong> project</p>
 
 <p align="center">
   Open-source security scanner for AI agent skills

@@ -7,10 +7,10 @@ export function SiteHeader() {
         <Link to="/" className="group flex items-center gap-2">
           <img
             src="/skvault-logo.svg"
-            alt="skscan"
+            alt="SKVault"
             className="size-6 rounded-md transition-opacity group-hover:opacity-80"
           />
-          <span className="font-mono text-sm font-semibold tracking-tight">skscan</span>
+          <span className="font-mono text-sm font-semibold tracking-tight">SKVault</span>
         </Link>
         <nav className="hidden items-center gap-6 sm:flex">
           <a href="#threats" className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
