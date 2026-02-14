@@ -1,48 +1,80 @@
-# SKVault CLI
+# skscan
 
-Command-line interface for the [SKVault](https://skvault.dev) skill registry — publish, install, and manage AI agent skills.
+Security scanner for AI agent skills — detect secrets, prompt injections, dangerous code, data exfiltration, and hidden instructions in SKILL.md files.
 
 ## Install
 
 ```bash
-npm install -g skvault
+npx skscan .          # run without installing
+npm install -g skscan # or install globally
 ```
 
-## Quick Start
+## Scan
 
 ```bash
-# Authenticate with your SKVault account
-sk login
-
-# Initialize a new skill project
-sk init
-
-# Add a skill to your project
-sk add @owner/skill-name
-
-# Publish your skill to the registry
-sk publish
+skscan .              # scan current directory
+skscan ./my-skill/    # scan a directory
+skscan ./SKILL.md     # scan a single file
 ```
 
-## Commands
+## Options
 
-| Command | Description |
-|---------|-------------|
-| `sk login` | Authenticate with SKVault |
-| `sk logout` | Log out and clear credentials |
-| `sk init` | Initialize a new skill project |
-| `sk publish` | Publish a skill to the registry |
-| `sk add <skill>` | Add a skill to your project |
-| `sk install` | Install all skills from the lockfile |
-| `sk update <skill>` | Update a skill to the latest version |
-| `sk rollback <skill>` | Roll back a skill to a previous version |
-| `sk search <query>` | Search the skill registry |
-| `sk diff <skill>` | Show changes between installed and latest version |
-| `sk token` | Manage API tokens |
+```
+-f, --format <fmt>   pretty | json | sarif (default: pretty)
+-s, --strict         exit 1 on any finding
+--ignore <rules>     comma-separated rule IDs to skip
+-c, --config <path>  path to config file
+--badge              output SVG badge to stdout
+```
 
-## Documentation
+## Config
 
-Full documentation available at [skvault.dev/docs](https://skvault.dev/docs).
+Create `.skscanrc.json`:
+
+```json
+{
+  "rules": {
+    "secrets/high-entropy": "off"
+  },
+  "ignore": ["node_modules/**", "dist/**"]
+}
+```
+
+Or run `skscan init` to generate one.
+
+## CI
+
+```yaml
+# .github/workflows/scan.yml
+name: Security Scan
+on: [push, pull_request]
+jobs:
+  skscan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx skscan ci .
+```
+
+The `ci` command outputs JSON, emits GitHub annotations, and exits 1 on any finding.
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Pass |
+| `1` | Fail (findings detected) |
+| `2` | Error |
+
+## 29 Rules, 5 Categories
+
+- **Secrets** (7) — AWS keys, GitHub tokens, private keys, passwords, high-entropy strings
+- **Dangerous Code** (8) — Remote code execution, destructive commands, dynamic execution
+- **Prompt Override** (6) — Instruction hijacking, role reassignment, restriction removal
+- **Exfiltration** (4) — Environment variable extraction, sensitive path access
+- **Hidden Instructions** (4) — Zero-width chars, invisible unicode, HTML comment injection
+
+Full rules reference and API docs at [github.com/Khaledgarbaya/skillvault](https://github.com/Khaledgarbaya/skillvault).
 
 ## License
 
