@@ -18,7 +18,26 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       { title: "skscan — Security Scanner for AI Agent Skills" },
+      {
+        name: "description",
+        content:
+          "Open-source security scanner for AI agent SKILL.md files. Catches prompt injection, secret leaks, dangerous code, and hidden instructions before they run.",
+      },
       { name: "theme-color", content: "#09090b" },
+      { property: "og:title", content: "skscan — Security Scanner for AI Agent Skills" },
+      {
+        property: "og:description",
+        content:
+          "Open-source security scanner for AI agent SKILL.md files. Catches prompt injection, secret leaks, dangerous code, and hidden instructions.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "skscan — Security Scanner for AI Agent Skills" },
+      {
+        name: "twitter:description",
+        content:
+          "Open-source security scanner for AI agent SKILL.md files. Catches prompt injection, secret leaks, dangerous code, and hidden instructions.",
+      },
     ],
     links: [
       { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
