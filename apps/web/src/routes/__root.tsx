@@ -3,7 +3,6 @@ import {
   createRootRoute,
   HeadContent,
   Scripts,
-  useRouterState,
 } from "@tanstack/react-router";
 import appCss from "../styles/app.css?url";
 import { SiteHeader } from "~/components/site-header";
@@ -18,7 +17,7 @@ export const Route = createRootRoute({
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
-      { title: "SKVault — Skill Registry for AI Agents" },
+      { title: "skscan — Security Scanner for AI Agent Skills" },
       { name: "theme-color", content: "#09090b" },
     ],
     links: [
@@ -53,20 +52,17 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isDashboard = pathname.startsWith("/dashboard");
-
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body className="flex min-h-screen flex-col font-sans">
-        {!isDashboard && <SiteHeader />}
+        <SiteHeader />
         <main className="flex-1">
           <Outlet />
         </main>
-        {!isDashboard && <SiteFooter />}
+        <SiteFooter />
         <Toaster />
         <Scripts />
       </body>

@@ -13,41 +13,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as DocsRouteImport } from './routes/docs'
-import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DocsIndexRouteImport } from './routes/docs/index'
-import { Route as DocsSkillfileReferenceRouteImport } from './routes/docs/skillfile-reference'
-import { Route as DocsScanningRouteImport } from './routes/docs/scanning'
-import { Route as DocsPublishingRouteImport } from './routes/docs/publishing'
-import { Route as DocsPrivateSkillsRouteImport } from './routes/docs/private-skills'
-import { Route as DocsInstallingRouteImport } from './routes/docs/installing'
-import { Route as DocsGettingStartedRouteImport } from './routes/docs/getting-started'
-import { Route as DocsCliReferenceRouteImport } from './routes/docs/cli-reference'
-import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
-import { Route as ProtectedDashboardIndexRouteImport } from './routes/_protected/dashboard/index'
-import { Route as SkillsOwnerNameRouteImport } from './routes/skills/$owner/$name'
+import { Route as ApiV1ScanRouteImport } from './routes/api/v1/scan'
 import { Route as ApiV1HealthRouteImport } from './routes/api/v1/health'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ProtectedDashboardTokensRouteImport } from './routes/_protected/dashboard/tokens'
-import { Route as ProtectedDashboardSettingsRouteImport } from './routes/_protected/dashboard/settings'
-import { Route as SkillsOwnerNameIndexRouteImport } from './routes/skills/$owner/$name/index'
-import { Route as ApiV1SkillsIndexRouteImport } from './routes/api/v1/skills/index'
-import { Route as ProtectedDashboardSkillsIndexRouteImport } from './routes/_protected/dashboard/skills/index'
-import { Route as SkillsOwnerNameVersionRouteImport } from './routes/skills/$owner/$name/$version'
-import { Route as ApiV1AuthTokensRouteImport } from './routes/api/v1/auth/tokens'
-import { Route as ApiV1AuthMeRouteImport } from './routes/api/v1/auth/me'
-import { Route as ProtectedDashboardSkillsNewRouteImport } from './routes/_protected/dashboard/skills/new'
-import { Route as ProtectedDashboardSkillsNameRouteImport } from './routes/_protected/dashboard/skills/$name'
-import { Route as ApiV1SkillsOwnerNameRouteImport } from './routes/api/v1/skills/$owner/$name'
-import { Route as ApiV1AuthTokensIdRouteImport } from './routes/api/v1/auth/tokens.$id'
-import { Route as ApiV1SkillsOwnerNameVersionsRouteImport } from './routes/api/v1/skills/$owner/$name/versions'
-import { Route as ApiV1SkillsOwnerNamePublishRouteImport } from './routes/api/v1/skills/$owner/$name/publish'
-import { Route as ApiV1SkillsOwnerNameBadgeRouteImport } from './routes/api/v1/skills/$owner/$name/badge'
-import { Route as ApiV1SkillsOwnerNameVersionRouteImport } from './routes/api/v1/skills/$owner/$name/$version'
-import { Route as ApiV1SkillsOwnerNameVersionDlRouteImport } from './routes/api/v1/skills/$owner/$name/$version/dl'
-import { Route as ApiV1SkillsOwnerNameDiffV1V2RouteImport } from './routes/api/v1/skills/$owner/$name/diff/$v1/$v2'
+import { Route as ApiV1BadgeProviderOwnerRepoRouteImport } from './routes/api/v1/badge/$provider/$owner/$repo'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -69,78 +39,14 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsRoute = DocsRouteImport.update({
-  id: '/docs',
-  path: '/docs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedRoute = ProtectedRouteImport.update({
-  id: '/_protected',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsIndexRoute = DocsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsSkillfileReferenceRoute = DocsSkillfileReferenceRouteImport.update({
-  id: '/skillfile-reference',
-  path: '/skillfile-reference',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsScanningRoute = DocsScanningRouteImport.update({
-  id: '/scanning',
-  path: '/scanning',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsPublishingRoute = DocsPublishingRouteImport.update({
-  id: '/publishing',
-  path: '/publishing',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsPrivateSkillsRoute = DocsPrivateSkillsRouteImport.update({
-  id: '/private-skills',
-  path: '/private-skills',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsInstallingRoute = DocsInstallingRouteImport.update({
-  id: '/installing',
-  path: '/installing',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsGettingStartedRoute = DocsGettingStartedRouteImport.update({
-  id: '/getting-started',
-  path: '/getting-started',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsCliReferenceRoute = DocsCliReferenceRouteImport.update({
-  id: '/cli-reference',
-  path: '/cli-reference',
-  getParentRoute: () => DocsRoute,
-} as any)
-const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedDashboardIndexRoute = ProtectedDashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedDashboardRoute,
-} as any)
-const SkillsOwnerNameRoute = SkillsOwnerNameRouteImport.update({
-  id: '/skills/$owner/$name',
-  path: '/skills/$owner/$name',
+const ApiV1ScanRoute = ApiV1ScanRouteImport.update({
+  id: '/api/v1/scan',
+  path: '/api/v1/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1HealthRoute = ApiV1HealthRouteImport.update({
@@ -153,364 +59,93 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedDashboardTokensRoute =
-  ProtectedDashboardTokensRouteImport.update({
-    id: '/tokens',
-    path: '/tokens',
-    getParentRoute: () => ProtectedDashboardRoute,
-  } as any)
-const ProtectedDashboardSettingsRoute =
-  ProtectedDashboardSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => ProtectedDashboardRoute,
-  } as any)
-const SkillsOwnerNameIndexRoute = SkillsOwnerNameIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SkillsOwnerNameRoute,
-} as any)
-const ApiV1SkillsIndexRoute = ApiV1SkillsIndexRouteImport.update({
-  id: '/api/v1/skills/',
-  path: '/api/v1/skills/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedDashboardSkillsIndexRoute =
-  ProtectedDashboardSkillsIndexRouteImport.update({
-    id: '/skills/',
-    path: '/skills/',
-    getParentRoute: () => ProtectedDashboardRoute,
-  } as any)
-const SkillsOwnerNameVersionRoute = SkillsOwnerNameVersionRouteImport.update({
-  id: '/$version',
-  path: '/$version',
-  getParentRoute: () => SkillsOwnerNameRoute,
-} as any)
-const ApiV1AuthTokensRoute = ApiV1AuthTokensRouteImport.update({
-  id: '/api/v1/auth/tokens',
-  path: '/api/v1/auth/tokens',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1AuthMeRoute = ApiV1AuthMeRouteImport.update({
-  id: '/api/v1/auth/me',
-  path: '/api/v1/auth/me',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedDashboardSkillsNewRoute =
-  ProtectedDashboardSkillsNewRouteImport.update({
-    id: '/skills/new',
-    path: '/skills/new',
-    getParentRoute: () => ProtectedDashboardRoute,
-  } as any)
-const ProtectedDashboardSkillsNameRoute =
-  ProtectedDashboardSkillsNameRouteImport.update({
-    id: '/skills/$name',
-    path: '/skills/$name',
-    getParentRoute: () => ProtectedDashboardRoute,
-  } as any)
-const ApiV1SkillsOwnerNameRoute = ApiV1SkillsOwnerNameRouteImport.update({
-  id: '/api/v1/skills/$owner/$name',
-  path: '/api/v1/skills/$owner/$name',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1AuthTokensIdRoute = ApiV1AuthTokensIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiV1AuthTokensRoute,
-} as any)
-const ApiV1SkillsOwnerNameVersionsRoute =
-  ApiV1SkillsOwnerNameVersionsRouteImport.update({
-    id: '/versions',
-    path: '/versions',
-    getParentRoute: () => ApiV1SkillsOwnerNameRoute,
-  } as any)
-const ApiV1SkillsOwnerNamePublishRoute =
-  ApiV1SkillsOwnerNamePublishRouteImport.update({
-    id: '/publish',
-    path: '/publish',
-    getParentRoute: () => ApiV1SkillsOwnerNameRoute,
-  } as any)
-const ApiV1SkillsOwnerNameBadgeRoute =
-  ApiV1SkillsOwnerNameBadgeRouteImport.update({
-    id: '/badge',
-    path: '/badge',
-    getParentRoute: () => ApiV1SkillsOwnerNameRoute,
-  } as any)
-const ApiV1SkillsOwnerNameVersionRoute =
-  ApiV1SkillsOwnerNameVersionRouteImport.update({
-    id: '/$version',
-    path: '/$version',
-    getParentRoute: () => ApiV1SkillsOwnerNameRoute,
-  } as any)
-const ApiV1SkillsOwnerNameVersionDlRoute =
-  ApiV1SkillsOwnerNameVersionDlRouteImport.update({
-    id: '/dl',
-    path: '/dl',
-    getParentRoute: () => ApiV1SkillsOwnerNameVersionRoute,
-  } as any)
-const ApiV1SkillsOwnerNameDiffV1V2Route =
-  ApiV1SkillsOwnerNameDiffV1V2RouteImport.update({
-    id: '/diff/$v1/$v2',
-    path: '/diff/$v1/$v2',
-    getParentRoute: () => ApiV1SkillsOwnerNameRoute,
+const ApiV1BadgeProviderOwnerRepoRoute =
+  ApiV1BadgeProviderOwnerRepoRouteImport.update({
+    id: '/api/v1/badge/$provider/$owner/$repo',
+    path: '/api/v1/badge/$provider/$owner/$repo',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/docs': typeof DocsRouteWithChildren
-  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof ProtectedDashboardRouteWithChildren
-  '/docs/cli-reference': typeof DocsCliReferenceRoute
-  '/docs/getting-started': typeof DocsGettingStartedRoute
-  '/docs/installing': typeof DocsInstallingRoute
-  '/docs/private-skills': typeof DocsPrivateSkillsRoute
-  '/docs/publishing': typeof DocsPublishingRoute
-  '/docs/scanning': typeof DocsScanningRoute
-  '/docs/skillfile-reference': typeof DocsSkillfileReferenceRoute
-  '/docs/': typeof DocsIndexRoute
-  '/dashboard/settings': typeof ProtectedDashboardSettingsRoute
-  '/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
-  '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
-  '/dashboard/': typeof ProtectedDashboardIndexRoute
-  '/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
-  '/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
-  '/api/v1/auth/me': typeof ApiV1AuthMeRoute
-  '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
-  '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
-  '/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
-  '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
-  '/skills/$owner/$name/': typeof SkillsOwnerNameIndexRoute
-  '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
-  '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
-  '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
-  '/api/v1/skills/$owner/$name/badge': typeof ApiV1SkillsOwnerNameBadgeRoute
-  '/api/v1/skills/$owner/$name/publish': typeof ApiV1SkillsOwnerNamePublishRoute
-  '/api/v1/skills/$owner/$name/versions': typeof ApiV1SkillsOwnerNameVersionsRoute
-  '/api/v1/skills/$owner/$name/$version/dl': typeof ApiV1SkillsOwnerNameVersionDlRoute
-  '/api/v1/skills/$owner/$name/diff/$v1/$v2': typeof ApiV1SkillsOwnerNameDiffV1V2Route
+  '/api/v1/scan': typeof ApiV1ScanRoute
+  '/api/v1/badge/$provider/$owner/$repo': typeof ApiV1BadgeProviderOwnerRepoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/docs/cli-reference': typeof DocsCliReferenceRoute
-  '/docs/getting-started': typeof DocsGettingStartedRoute
-  '/docs/installing': typeof DocsInstallingRoute
-  '/docs/private-skills': typeof DocsPrivateSkillsRoute
-  '/docs/publishing': typeof DocsPublishingRoute
-  '/docs/scanning': typeof DocsScanningRoute
-  '/docs/skillfile-reference': typeof DocsSkillfileReferenceRoute
-  '/docs': typeof DocsIndexRoute
-  '/dashboard/settings': typeof ProtectedDashboardSettingsRoute
-  '/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
-  '/dashboard': typeof ProtectedDashboardIndexRoute
-  '/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
-  '/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
-  '/api/v1/auth/me': typeof ApiV1AuthMeRoute
-  '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
-  '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
-  '/dashboard/skills': typeof ProtectedDashboardSkillsIndexRoute
-  '/api/v1/skills': typeof ApiV1SkillsIndexRoute
-  '/skills/$owner/$name': typeof SkillsOwnerNameIndexRoute
-  '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
-  '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
-  '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
-  '/api/v1/skills/$owner/$name/badge': typeof ApiV1SkillsOwnerNameBadgeRoute
-  '/api/v1/skills/$owner/$name/publish': typeof ApiV1SkillsOwnerNamePublishRoute
-  '/api/v1/skills/$owner/$name/versions': typeof ApiV1SkillsOwnerNameVersionsRoute
-  '/api/v1/skills/$owner/$name/$version/dl': typeof ApiV1SkillsOwnerNameVersionDlRoute
-  '/api/v1/skills/$owner/$name/diff/$v1/$v2': typeof ApiV1SkillsOwnerNameDiffV1V2Route
+  '/api/v1/scan': typeof ApiV1ScanRoute
+  '/api/v1/badge/$provider/$owner/$repo': typeof ApiV1BadgeProviderOwnerRepoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_protected': typeof ProtectedRouteWithChildren
-  '/docs': typeof DocsRouteWithChildren
-  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_protected/dashboard': typeof ProtectedDashboardRouteWithChildren
-  '/docs/cli-reference': typeof DocsCliReferenceRoute
-  '/docs/getting-started': typeof DocsGettingStartedRoute
-  '/docs/installing': typeof DocsInstallingRoute
-  '/docs/private-skills': typeof DocsPrivateSkillsRoute
-  '/docs/publishing': typeof DocsPublishingRoute
-  '/docs/scanning': typeof DocsScanningRoute
-  '/docs/skillfile-reference': typeof DocsSkillfileReferenceRoute
-  '/docs/': typeof DocsIndexRoute
-  '/_protected/dashboard/settings': typeof ProtectedDashboardSettingsRoute
-  '/_protected/dashboard/tokens': typeof ProtectedDashboardTokensRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/health': typeof ApiV1HealthRoute
-  '/skills/$owner/$name': typeof SkillsOwnerNameRouteWithChildren
-  '/_protected/dashboard/': typeof ProtectedDashboardIndexRoute
-  '/_protected/dashboard/skills/$name': typeof ProtectedDashboardSkillsNameRoute
-  '/_protected/dashboard/skills/new': typeof ProtectedDashboardSkillsNewRoute
-  '/api/v1/auth/me': typeof ApiV1AuthMeRoute
-  '/api/v1/auth/tokens': typeof ApiV1AuthTokensRouteWithChildren
-  '/skills/$owner/$name/$version': typeof SkillsOwnerNameVersionRoute
-  '/_protected/dashboard/skills/': typeof ProtectedDashboardSkillsIndexRoute
-  '/api/v1/skills/': typeof ApiV1SkillsIndexRoute
-  '/skills/$owner/$name/': typeof SkillsOwnerNameIndexRoute
-  '/api/v1/auth/tokens/$id': typeof ApiV1AuthTokensIdRoute
-  '/api/v1/skills/$owner/$name': typeof ApiV1SkillsOwnerNameRouteWithChildren
-  '/api/v1/skills/$owner/$name/$version': typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
-  '/api/v1/skills/$owner/$name/badge': typeof ApiV1SkillsOwnerNameBadgeRoute
-  '/api/v1/skills/$owner/$name/publish': typeof ApiV1SkillsOwnerNamePublishRoute
-  '/api/v1/skills/$owner/$name/versions': typeof ApiV1SkillsOwnerNameVersionsRoute
-  '/api/v1/skills/$owner/$name/$version/dl': typeof ApiV1SkillsOwnerNameVersionDlRoute
-  '/api/v1/skills/$owner/$name/diff/$v1/$v2': typeof ApiV1SkillsOwnerNameDiffV1V2Route
+  '/api/v1/scan': typeof ApiV1ScanRoute
+  '/api/v1/badge/$provider/$owner/$repo': typeof ApiV1BadgeProviderOwnerRepoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/docs'
-    | '/explore'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/dashboard'
-    | '/docs/cli-reference'
-    | '/docs/getting-started'
-    | '/docs/installing'
-    | '/docs/private-skills'
-    | '/docs/publishing'
-    | '/docs/scanning'
-    | '/docs/skillfile-reference'
-    | '/docs/'
-    | '/dashboard/settings'
-    | '/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
-    | '/skills/$owner/$name'
-    | '/dashboard/'
-    | '/dashboard/skills/$name'
-    | '/dashboard/skills/new'
-    | '/api/v1/auth/me'
-    | '/api/v1/auth/tokens'
-    | '/skills/$owner/$name/$version'
-    | '/dashboard/skills/'
-    | '/api/v1/skills/'
-    | '/skills/$owner/$name/'
-    | '/api/v1/auth/tokens/$id'
-    | '/api/v1/skills/$owner/$name'
-    | '/api/v1/skills/$owner/$name/$version'
-    | '/api/v1/skills/$owner/$name/badge'
-    | '/api/v1/skills/$owner/$name/publish'
-    | '/api/v1/skills/$owner/$name/versions'
-    | '/api/v1/skills/$owner/$name/$version/dl'
-    | '/api/v1/skills/$owner/$name/diff/$v1/$v2'
+    | '/api/v1/scan'
+    | '/api/v1/badge/$provider/$owner/$repo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/explore'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/docs/cli-reference'
-    | '/docs/getting-started'
-    | '/docs/installing'
-    | '/docs/private-skills'
-    | '/docs/publishing'
-    | '/docs/scanning'
-    | '/docs/skillfile-reference'
-    | '/docs'
-    | '/dashboard/settings'
-    | '/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
-    | '/dashboard'
-    | '/dashboard/skills/$name'
-    | '/dashboard/skills/new'
-    | '/api/v1/auth/me'
-    | '/api/v1/auth/tokens'
-    | '/skills/$owner/$name/$version'
-    | '/dashboard/skills'
-    | '/api/v1/skills'
-    | '/skills/$owner/$name'
-    | '/api/v1/auth/tokens/$id'
-    | '/api/v1/skills/$owner/$name'
-    | '/api/v1/skills/$owner/$name/$version'
-    | '/api/v1/skills/$owner/$name/badge'
-    | '/api/v1/skills/$owner/$name/publish'
-    | '/api/v1/skills/$owner/$name/versions'
-    | '/api/v1/skills/$owner/$name/$version/dl'
-    | '/api/v1/skills/$owner/$name/diff/$v1/$v2'
+    | '/api/v1/scan'
+    | '/api/v1/badge/$provider/$owner/$repo'
   id:
     | '__root__'
     | '/'
-    | '/_protected'
-    | '/docs'
-    | '/explore'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/_protected/dashboard'
-    | '/docs/cli-reference'
-    | '/docs/getting-started'
-    | '/docs/installing'
-    | '/docs/private-skills'
-    | '/docs/publishing'
-    | '/docs/scanning'
-    | '/docs/skillfile-reference'
-    | '/docs/'
-    | '/_protected/dashboard/settings'
-    | '/_protected/dashboard/tokens'
     | '/api/auth/$'
     | '/api/v1/health'
-    | '/skills/$owner/$name'
-    | '/_protected/dashboard/'
-    | '/_protected/dashboard/skills/$name'
-    | '/_protected/dashboard/skills/new'
-    | '/api/v1/auth/me'
-    | '/api/v1/auth/tokens'
-    | '/skills/$owner/$name/$version'
-    | '/_protected/dashboard/skills/'
-    | '/api/v1/skills/'
-    | '/skills/$owner/$name/'
-    | '/api/v1/auth/tokens/$id'
-    | '/api/v1/skills/$owner/$name'
-    | '/api/v1/skills/$owner/$name/$version'
-    | '/api/v1/skills/$owner/$name/badge'
-    | '/api/v1/skills/$owner/$name/publish'
-    | '/api/v1/skills/$owner/$name/versions'
-    | '/api/v1/skills/$owner/$name/$version/dl'
-    | '/api/v1/skills/$owner/$name/diff/$v1/$v2'
+    | '/api/v1/scan'
+    | '/api/v1/badge/$provider/$owner/$repo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ProtectedRoute: typeof ProtectedRouteWithChildren
-  DocsRoute: typeof DocsRouteWithChildren
-  ExploreRoute: typeof ExploreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1HealthRoute: typeof ApiV1HealthRoute
-  SkillsOwnerNameRoute: typeof SkillsOwnerNameRouteWithChildren
-  ApiV1AuthMeRoute: typeof ApiV1AuthMeRoute
-  ApiV1AuthTokensRoute: typeof ApiV1AuthTokensRouteWithChildren
-  ApiV1SkillsIndexRoute: typeof ApiV1SkillsIndexRoute
-  ApiV1SkillsOwnerNameRoute: typeof ApiV1SkillsOwnerNameRouteWithChildren
+  ApiV1ScanRoute: typeof ApiV1ScanRoute
+  ApiV1BadgeProviderOwnerRepoRoute: typeof ApiV1BadgeProviderOwnerRepoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -543,27 +178,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs': {
-      id: '/docs'
-      path: '/docs'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof ProtectedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -571,81 +185,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/': {
-      id: '/docs/'
-      path: '/'
-      fullPath: '/docs/'
-      preLoaderRoute: typeof DocsIndexRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/skillfile-reference': {
-      id: '/docs/skillfile-reference'
-      path: '/skillfile-reference'
-      fullPath: '/docs/skillfile-reference'
-      preLoaderRoute: typeof DocsSkillfileReferenceRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/scanning': {
-      id: '/docs/scanning'
-      path: '/scanning'
-      fullPath: '/docs/scanning'
-      preLoaderRoute: typeof DocsScanningRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/publishing': {
-      id: '/docs/publishing'
-      path: '/publishing'
-      fullPath: '/docs/publishing'
-      preLoaderRoute: typeof DocsPublishingRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/private-skills': {
-      id: '/docs/private-skills'
-      path: '/private-skills'
-      fullPath: '/docs/private-skills'
-      preLoaderRoute: typeof DocsPrivateSkillsRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/installing': {
-      id: '/docs/installing'
-      path: '/installing'
-      fullPath: '/docs/installing'
-      preLoaderRoute: typeof DocsInstallingRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/getting-started': {
-      id: '/docs/getting-started'
-      path: '/getting-started'
-      fullPath: '/docs/getting-started'
-      preLoaderRoute: typeof DocsGettingStartedRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/cli-reference': {
-      id: '/docs/cli-reference'
-      path: '/cli-reference'
-      fullPath: '/docs/cli-reference'
-      preLoaderRoute: typeof DocsCliReferenceRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/dashboard/': {
-      id: '/_protected/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof ProtectedDashboardIndexRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/skills/$owner/$name': {
-      id: '/skills/$owner/$name'
-      path: '/skills/$owner/$name'
-      fullPath: '/skills/$owner/$name'
-      preLoaderRoute: typeof SkillsOwnerNameRouteImport
+    '/api/v1/scan': {
+      id: '/api/v1/scan'
+      path: '/api/v1/scan'
+      fullPath: '/api/v1/scan'
+      preLoaderRoute: typeof ApiV1ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/health': {
@@ -662,268 +206,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/dashboard/tokens': {
-      id: '/_protected/dashboard/tokens'
-      path: '/tokens'
-      fullPath: '/dashboard/tokens'
-      preLoaderRoute: typeof ProtectedDashboardTokensRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/_protected/dashboard/settings': {
-      id: '/_protected/dashboard/settings'
-      path: '/settings'
-      fullPath: '/dashboard/settings'
-      preLoaderRoute: typeof ProtectedDashboardSettingsRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/skills/$owner/$name/': {
-      id: '/skills/$owner/$name/'
-      path: '/'
-      fullPath: '/skills/$owner/$name/'
-      preLoaderRoute: typeof SkillsOwnerNameIndexRouteImport
-      parentRoute: typeof SkillsOwnerNameRoute
-    }
-    '/api/v1/skills/': {
-      id: '/api/v1/skills/'
-      path: '/api/v1/skills'
-      fullPath: '/api/v1/skills/'
-      preLoaderRoute: typeof ApiV1SkillsIndexRouteImport
+    '/api/v1/badge/$provider/$owner/$repo': {
+      id: '/api/v1/badge/$provider/$owner/$repo'
+      path: '/api/v1/badge/$provider/$owner/$repo'
+      fullPath: '/api/v1/badge/$provider/$owner/$repo'
+      preLoaderRoute: typeof ApiV1BadgeProviderOwnerRepoRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_protected/dashboard/skills/': {
-      id: '/_protected/dashboard/skills/'
-      path: '/skills'
-      fullPath: '/dashboard/skills/'
-      preLoaderRoute: typeof ProtectedDashboardSkillsIndexRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/skills/$owner/$name/$version': {
-      id: '/skills/$owner/$name/$version'
-      path: '/$version'
-      fullPath: '/skills/$owner/$name/$version'
-      preLoaderRoute: typeof SkillsOwnerNameVersionRouteImport
-      parentRoute: typeof SkillsOwnerNameRoute
-    }
-    '/api/v1/auth/tokens': {
-      id: '/api/v1/auth/tokens'
-      path: '/api/v1/auth/tokens'
-      fullPath: '/api/v1/auth/tokens'
-      preLoaderRoute: typeof ApiV1AuthTokensRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/auth/me': {
-      id: '/api/v1/auth/me'
-      path: '/api/v1/auth/me'
-      fullPath: '/api/v1/auth/me'
-      preLoaderRoute: typeof ApiV1AuthMeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_protected/dashboard/skills/new': {
-      id: '/_protected/dashboard/skills/new'
-      path: '/skills/new'
-      fullPath: '/dashboard/skills/new'
-      preLoaderRoute: typeof ProtectedDashboardSkillsNewRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/_protected/dashboard/skills/$name': {
-      id: '/_protected/dashboard/skills/$name'
-      path: '/skills/$name'
-      fullPath: '/dashboard/skills/$name'
-      preLoaderRoute: typeof ProtectedDashboardSkillsNameRouteImport
-      parentRoute: typeof ProtectedDashboardRoute
-    }
-    '/api/v1/skills/$owner/$name': {
-      id: '/api/v1/skills/$owner/$name'
-      path: '/api/v1/skills/$owner/$name'
-      fullPath: '/api/v1/skills/$owner/$name'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/auth/tokens/$id': {
-      id: '/api/v1/auth/tokens/$id'
-      path: '/$id'
-      fullPath: '/api/v1/auth/tokens/$id'
-      preLoaderRoute: typeof ApiV1AuthTokensIdRouteImport
-      parentRoute: typeof ApiV1AuthTokensRoute
-    }
-    '/api/v1/skills/$owner/$name/versions': {
-      id: '/api/v1/skills/$owner/$name/versions'
-      path: '/versions'
-      fullPath: '/api/v1/skills/$owner/$name/versions'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameVersionsRouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameRoute
-    }
-    '/api/v1/skills/$owner/$name/publish': {
-      id: '/api/v1/skills/$owner/$name/publish'
-      path: '/publish'
-      fullPath: '/api/v1/skills/$owner/$name/publish'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNamePublishRouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameRoute
-    }
-    '/api/v1/skills/$owner/$name/badge': {
-      id: '/api/v1/skills/$owner/$name/badge'
-      path: '/badge'
-      fullPath: '/api/v1/skills/$owner/$name/badge'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameBadgeRouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameRoute
-    }
-    '/api/v1/skills/$owner/$name/$version': {
-      id: '/api/v1/skills/$owner/$name/$version'
-      path: '/$version'
-      fullPath: '/api/v1/skills/$owner/$name/$version'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameVersionRouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameRoute
-    }
-    '/api/v1/skills/$owner/$name/$version/dl': {
-      id: '/api/v1/skills/$owner/$name/$version/dl'
-      path: '/dl'
-      fullPath: '/api/v1/skills/$owner/$name/$version/dl'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameVersionDlRouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameVersionRoute
-    }
-    '/api/v1/skills/$owner/$name/diff/$v1/$v2': {
-      id: '/api/v1/skills/$owner/$name/diff/$v1/$v2'
-      path: '/diff/$v1/$v2'
-      fullPath: '/api/v1/skills/$owner/$name/diff/$v1/$v2'
-      preLoaderRoute: typeof ApiV1SkillsOwnerNameDiffV1V2RouteImport
-      parentRoute: typeof ApiV1SkillsOwnerNameRoute
     }
   }
 }
-
-interface ProtectedDashboardRouteChildren {
-  ProtectedDashboardSettingsRoute: typeof ProtectedDashboardSettingsRoute
-  ProtectedDashboardTokensRoute: typeof ProtectedDashboardTokensRoute
-  ProtectedDashboardIndexRoute: typeof ProtectedDashboardIndexRoute
-  ProtectedDashboardSkillsNameRoute: typeof ProtectedDashboardSkillsNameRoute
-  ProtectedDashboardSkillsNewRoute: typeof ProtectedDashboardSkillsNewRoute
-  ProtectedDashboardSkillsIndexRoute: typeof ProtectedDashboardSkillsIndexRoute
-}
-
-const ProtectedDashboardRouteChildren: ProtectedDashboardRouteChildren = {
-  ProtectedDashboardSettingsRoute: ProtectedDashboardSettingsRoute,
-  ProtectedDashboardTokensRoute: ProtectedDashboardTokensRoute,
-  ProtectedDashboardIndexRoute: ProtectedDashboardIndexRoute,
-  ProtectedDashboardSkillsNameRoute: ProtectedDashboardSkillsNameRoute,
-  ProtectedDashboardSkillsNewRoute: ProtectedDashboardSkillsNewRoute,
-  ProtectedDashboardSkillsIndexRoute: ProtectedDashboardSkillsIndexRoute,
-}
-
-const ProtectedDashboardRouteWithChildren =
-  ProtectedDashboardRoute._addFileChildren(ProtectedDashboardRouteChildren)
-
-interface ProtectedRouteChildren {
-  ProtectedDashboardRoute: typeof ProtectedDashboardRouteWithChildren
-}
-
-const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedDashboardRoute: ProtectedDashboardRouteWithChildren,
-}
-
-const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
-  ProtectedRouteChildren,
-)
-
-interface DocsRouteChildren {
-  DocsCliReferenceRoute: typeof DocsCliReferenceRoute
-  DocsGettingStartedRoute: typeof DocsGettingStartedRoute
-  DocsInstallingRoute: typeof DocsInstallingRoute
-  DocsPrivateSkillsRoute: typeof DocsPrivateSkillsRoute
-  DocsPublishingRoute: typeof DocsPublishingRoute
-  DocsScanningRoute: typeof DocsScanningRoute
-  DocsSkillfileReferenceRoute: typeof DocsSkillfileReferenceRoute
-  DocsIndexRoute: typeof DocsIndexRoute
-}
-
-const DocsRouteChildren: DocsRouteChildren = {
-  DocsCliReferenceRoute: DocsCliReferenceRoute,
-  DocsGettingStartedRoute: DocsGettingStartedRoute,
-  DocsInstallingRoute: DocsInstallingRoute,
-  DocsPrivateSkillsRoute: DocsPrivateSkillsRoute,
-  DocsPublishingRoute: DocsPublishingRoute,
-  DocsScanningRoute: DocsScanningRoute,
-  DocsSkillfileReferenceRoute: DocsSkillfileReferenceRoute,
-  DocsIndexRoute: DocsIndexRoute,
-}
-
-const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
-
-interface SkillsOwnerNameRouteChildren {
-  SkillsOwnerNameVersionRoute: typeof SkillsOwnerNameVersionRoute
-  SkillsOwnerNameIndexRoute: typeof SkillsOwnerNameIndexRoute
-}
-
-const SkillsOwnerNameRouteChildren: SkillsOwnerNameRouteChildren = {
-  SkillsOwnerNameVersionRoute: SkillsOwnerNameVersionRoute,
-  SkillsOwnerNameIndexRoute: SkillsOwnerNameIndexRoute,
-}
-
-const SkillsOwnerNameRouteWithChildren = SkillsOwnerNameRoute._addFileChildren(
-  SkillsOwnerNameRouteChildren,
-)
-
-interface ApiV1AuthTokensRouteChildren {
-  ApiV1AuthTokensIdRoute: typeof ApiV1AuthTokensIdRoute
-}
-
-const ApiV1AuthTokensRouteChildren: ApiV1AuthTokensRouteChildren = {
-  ApiV1AuthTokensIdRoute: ApiV1AuthTokensIdRoute,
-}
-
-const ApiV1AuthTokensRouteWithChildren = ApiV1AuthTokensRoute._addFileChildren(
-  ApiV1AuthTokensRouteChildren,
-)
-
-interface ApiV1SkillsOwnerNameVersionRouteChildren {
-  ApiV1SkillsOwnerNameVersionDlRoute: typeof ApiV1SkillsOwnerNameVersionDlRoute
-}
-
-const ApiV1SkillsOwnerNameVersionRouteChildren: ApiV1SkillsOwnerNameVersionRouteChildren =
-  {
-    ApiV1SkillsOwnerNameVersionDlRoute: ApiV1SkillsOwnerNameVersionDlRoute,
-  }
-
-const ApiV1SkillsOwnerNameVersionRouteWithChildren =
-  ApiV1SkillsOwnerNameVersionRoute._addFileChildren(
-    ApiV1SkillsOwnerNameVersionRouteChildren,
-  )
-
-interface ApiV1SkillsOwnerNameRouteChildren {
-  ApiV1SkillsOwnerNameVersionRoute: typeof ApiV1SkillsOwnerNameVersionRouteWithChildren
-  ApiV1SkillsOwnerNameBadgeRoute: typeof ApiV1SkillsOwnerNameBadgeRoute
-  ApiV1SkillsOwnerNamePublishRoute: typeof ApiV1SkillsOwnerNamePublishRoute
-  ApiV1SkillsOwnerNameVersionsRoute: typeof ApiV1SkillsOwnerNameVersionsRoute
-  ApiV1SkillsOwnerNameDiffV1V2Route: typeof ApiV1SkillsOwnerNameDiffV1V2Route
-}
-
-const ApiV1SkillsOwnerNameRouteChildren: ApiV1SkillsOwnerNameRouteChildren = {
-  ApiV1SkillsOwnerNameVersionRoute:
-    ApiV1SkillsOwnerNameVersionRouteWithChildren,
-  ApiV1SkillsOwnerNameBadgeRoute: ApiV1SkillsOwnerNameBadgeRoute,
-  ApiV1SkillsOwnerNamePublishRoute: ApiV1SkillsOwnerNamePublishRoute,
-  ApiV1SkillsOwnerNameVersionsRoute: ApiV1SkillsOwnerNameVersionsRoute,
-  ApiV1SkillsOwnerNameDiffV1V2Route: ApiV1SkillsOwnerNameDiffV1V2Route,
-}
-
-const ApiV1SkillsOwnerNameRouteWithChildren =
-  ApiV1SkillsOwnerNameRoute._addFileChildren(ApiV1SkillsOwnerNameRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProtectedRoute: ProtectedRouteWithChildren,
-  DocsRoute: DocsRouteWithChildren,
-  ExploreRoute: ExploreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1HealthRoute: ApiV1HealthRoute,
-  SkillsOwnerNameRoute: SkillsOwnerNameRouteWithChildren,
-  ApiV1AuthMeRoute: ApiV1AuthMeRoute,
-  ApiV1AuthTokensRoute: ApiV1AuthTokensRouteWithChildren,
-  ApiV1SkillsIndexRoute: ApiV1SkillsIndexRoute,
-  ApiV1SkillsOwnerNameRoute: ApiV1SkillsOwnerNameRouteWithChildren,
+  ApiV1ScanRoute: ApiV1ScanRoute,
+  ApiV1BadgeProviderOwnerRepoRoute: ApiV1BadgeProviderOwnerRepoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

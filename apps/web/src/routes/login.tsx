@@ -18,7 +18,7 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
     const session = await getSessionFn();
     if (session?.user) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/" });
     }
   },
   component: LoginPage,
@@ -34,7 +34,7 @@ function LoginPage() {
   async function handleGitHub() {
     await signIn.social({
       provider: "github",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     });
   }
 
@@ -47,7 +47,7 @@ function LoginPage() {
       if (result.error) {
         setError(result.error.message ?? "Login failed");
       } else {
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/" });
       }
     } catch {
       setError("An unexpected error occurred");

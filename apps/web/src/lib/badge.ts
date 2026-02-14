@@ -7,13 +7,13 @@ const UNKNOWN_COLOR = "#9f9f9f";
 const LABEL_COLOR = "#555";
 
 const STATUS_LABELS: Record<string, string> = {
-  pass: "passing",
-  warn: "warning",
-  fail: "failing",
+  pass: "pass",
+  warn: "warn",
+  fail: "fail",
 };
 
 export function renderBadge(status: "pass" | "warn" | "fail" | null): string {
-  const label = "scan";
+  const label = "skscan";
   const value = status ? STATUS_LABELS[status] : "unknown";
   const color = status ? STATUS_COLORS[status] : UNKNOWN_COLOR;
 
