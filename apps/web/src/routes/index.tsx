@@ -362,20 +362,24 @@ function HomePage() {
                 </p>
                 <div className="flex items-center justify-center rounded-md border border-white/[0.04] bg-[#0a0a0f] p-4">
                   {/* Inline SVG badge preview */}
-                  <svg width="106" height="20" viewBox="0 0 106 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="skscan: pass">
+                  <svg width="104" height="20" viewBox="0 0 104 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="skscan: pass">
                     <linearGradient id="b" x2="0" y2="100%">
                       <stop offset="0" stopColor="#bbb" stopOpacity=".1" />
                       <stop offset="1" stopOpacity=".1" />
                     </linearGradient>
-                    <clipPath id="r"><rect width="106" height="20" rx="3" fill="#fff" /></clipPath>
-                    <g clipPath="url(#r)">
-                      <rect width="56" height="20" fill="#555" />
-                      <rect x="56" width="50" height="20" fill="#4c1" />
-                      <rect width="106" height="20" fill="url(#b)" />
+                    <clipPath id="bp"><rect width="104" height="20" rx="3" fill="#fff" /></clipPath>
+                    <g clipPath="url(#bp)">
+                      <rect width="64" height="20" fill="#1a1a1a" />
+                      <rect x="64" width="40" height="20" fill="#4c1" />
+                      <rect width="104" height="20" fill="url(#b)" />
                     </g>
-                    <g fill="#fff" textAnchor="middle" fontFamily="Verdana,Geneva,DejaVu Sans,sans-serif" fontSize="11" fontWeight="bold">
-                      <text x="28" y="14">skscan</text>
-                      <text x="80" y="14">pass</text>
+                    <g transform="translate(4, 2)">
+                      <text fontFamily="'Courier New',monospace" fontSize="12" fontWeight="700" fill="#4ade80" y="12">$</text>
+                      <path d="M11.5 4 L7.5 8 L11.5 12" fill="none" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </g>
+                    <g fill="#fff" textAnchor="middle" fontFamily="Verdana,Geneva,DejaVu Sans,sans-serif" fontSize="11">
+                      <text x="40" y="14">skscan</text>
+                      <text x="84" y="14">pass</text>
                     </g>
                   </svg>
                 </div>
