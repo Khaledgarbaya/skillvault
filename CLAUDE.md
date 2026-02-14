@@ -1,6 +1,6 @@
-# SKVault — Skill Registry for AI Agents
+# SKVault — Security Scanner for AI Agent Skills
 
-Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (Node CLI), `packages/shared` (types + validation)
+Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (Node CLI), `packages/scanner` (@skvault/scanner — scanner engine, MIT)
 
 ## Setup
 
@@ -12,7 +12,7 @@ Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (Node CL
 
 ```
 nvm use               # ALWAYS first — ensure correct Node version
-pnpm build            # shared → web + cli (shared must build first)
+pnpm build            # scanner → web + cli (scanner must build first)
 pnpm dev              # web dev server (Vite)
 pnpm db:generate      # generate Drizzle migrations
 pnpm db:migrate       # apply migrations to local D1

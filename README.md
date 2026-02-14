@@ -17,7 +17,7 @@ apps/
   web/     @skvault/web   — Web registry + API (TanStack Start, Cloudflare Workers, D1)
   cli/     skvault        — CLI tool (`sk` binary)
 packages/
-  shared/  @skvault/shared — Shared types + validation + security scanner
+  shared/  @skvault/scanner — Shared types + validation + security scanner
 ```
 
 ### Tech Stack

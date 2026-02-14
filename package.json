@@ -3,14 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:shared": "pnpm --filter @skvault/shared build",
+    "build:scanner": "pnpm --filter @skvault/scanner build",
     "build:web": "pnpm --filter @skvault/web build",
     "build:cli": "pnpm --filter ./apps/cli build",
-    "build": "pnpm build:shared && pnpm build:web && pnpm build:cli",
+    "build": "pnpm build:scanner && pnpm build:web && pnpm build:cli",
     "dev": "pnpm --filter @skvault/web dev",
     "dev:cli": "pnpm --filter ./apps/cli dev",
     "dev:wrangler": "pnpm --filter @skvault/web exec wrangler dev",
-    "test": "pnpm --filter @skvault/shared test",
+    "test": "pnpm --filter @skvault/scanner test",
+    "eval": "pnpm --filter @skvault/scanner eval:ai",
     "db:generate": "pnpm --filter @skvault/web db:generate",
     "db:migrate": "pnpm --filter @skvault/web db:migrate",
     "deploy": "pnpm --filter @skvault/web exec wrangler deploy"

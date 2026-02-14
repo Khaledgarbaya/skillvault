@@ -67,7 +67,7 @@ skillvault/
 ├── CLAUDE.md                        # Claude Code project instructions
 ├── README.md
 ├── packages/
-│   └── scanner/                      # @skvault/scanner — scanner engine + types (MIT)
+│   └── shared/                      # @skvault/shared — scanner engine + types (MIT)
 │       ├── package.json
 │       ├── tsup.config.ts
 │       └── src/
@@ -118,11 +118,11 @@ skillvault/
 Root scripts:
 ```json
 {
-  "build:scanner": "pnpm --filter @skvault/scanner build",
+  "build:shared": "pnpm --filter @skvault/shared build",
   "build:cli": "pnpm --filter skscan build",
   "build:web": "pnpm --filter @skvault/web build",
-  "build": "pnpm build:scanner && pnpm build:cli && pnpm build:web",
-  "dev": "pnpm build:scanner && pnpm --filter @skvault/web dev",
+  "build": "pnpm build:shared && pnpm build:cli && pnpm build:web",
+  "dev": "pnpm build:shared && pnpm --filter @skvault/web dev",
   "dev:wrangler": "pnpm build && pnpm --filter @skvault/web wrangler dev",
   "test": "pnpm -r test",
   "db:generate": "pnpm --filter @skvault/web run db:generate",
@@ -157,14 +157,14 @@ Root scripts:
 
 ---
 
-## Scanner Engine — @skvault/scanner
+## Scanner Engine — @skvault/shared
 
 The core product. Platform-agnostic TypeScript. No Node.js-specific APIs. Runs in Node (CLI) and Cloudflare Workers (API).
 
 ### Entry point
 
 ```typescript
-import { scanSkill } from "@skvault/scanner";
+import { scanSkill } from "@skvault/shared";
 
 const result = await scanSkill(files, config?);
 ```
@@ -617,7 +617,7 @@ RESEND_API_KEY=dev_resend_key
 ### Local Development
 
 ```bash
-pnpm build:scanner                       # build scanner first
+pnpm build:shared                       # build scanner first
 pnpm dev                                 # TanStack Start dev server
 # OR production-like:
 pnpm build && pnpm --filter @skvault/web wrangler dev
@@ -663,17 +663,16 @@ IMPORTANT: Read the frontend design skill at /mnt/skills/public/frontend-design/
 
 ## Build Plan (5 days)
 
-NOTE: Monorepo, config, secrets, wrangler, web app, CLI, and packages/shared already exist from the registry version. This plan is about refactoring, not greenfield. First step: rename packages/shared → packages/scanner.
+NOTE: Monorepo, config, secrets, wrangler, web app, CLI, and shared package already exist from the registry version. This plan is about refactoring, not greenfield.
 
-### Day 1: Rename + Refactor packages/shared → packages/scanner
-- Rename packages/shared to packages/scanner, update all references
-- Strip registry types (skill versioning, tarball, lockfile types)
+### Day 1: Refactor shared → Scanner Engine
+- Strip registry types from packages/shared (remove skill versioning, tarball, lockfile types)
 - Add scanner types: SkillFile, ScanFinding, ScanResult, ScanConfig
-- Implement all 29 scan rules in packages/scanner/src/rules/
+- Implement all 29 scan rules in packages/shared/src/scanner/rules/
 - Build code-scanner.ts and prompt-scanner.ts orchestrators
 - Export scanSkill() as main entry point
 - Unit tests with vitest (positive + negative cases for every rule)
-- Verify: pnpm build:scanner && pnpm test passes
+- Verify: pnpm build:shared && pnpm test passes
 
 ### Day 2: Refactor CLI → Scan Commands
 - Strip registry commands from apps/cli (remove add, install, publish, rollback, update, login)
@@ -705,89 +704,9 @@ NOTE: Monorepo, config, secrets, wrangler, web app, CLI, and packages/shared alr
 - Update README.md for scanner focus
 - Test against real skills from skills.sh and test-skills/
 - Domain setup (skvault.dev + skv.sh for badges)
-- Publish to npm:
-  pnpm --filter @skvault/scanner publish --access public
-  pnpm --filter skscan publish --access public
+- Publish to npm: pnpm --filter skscan publish --access public
 - Publish GitHub Action
 - Write launch post
-
----
-
-## npm Packages
-
-Two packages published to npm. Both open source (MIT).
-
-### @skvault/scanner (library)
-
-The scan engine. For tool authors who want to build on top of skscan.
-
-```json
-{
-  "name": "@skvault/scanner",
-  "version": "0.1.0",
-  "description": "Security scanner engine for AI agent skills",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "files": ["dist"],
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/skvault/skscan",
-    "directory": "packages/scanner"
-  },
-  "keywords": ["ai", "agent", "skills", "security", "scanner", "prompt-injection"]
-}
-```
-
-Usage:
-```typescript
-import { scanSkill } from "@skvault/scanner";
-
-const result = await scanSkill([
-  { path: "SKILL.md", content: "..." },
-  { path: "helper.sh", content: "..." }
-]);
-
-if (result.status === "fail") {
-  console.log(result.findings);
-}
-```
-
-### skscan (CLI)
-
-The CLI tool. For developers scanning skills locally or in CI.
-
-```json
-{
-  "name": "skscan",
-  "version": "0.1.0",
-  "description": "Security scanner for AI agent skills",
-  "license": "MIT",
-  "bin": { "skscan": "dist/index.js" },
-  "files": ["dist"],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/skvault/skscan",
-    "directory": "apps/cli"
-  },
-  "keywords": ["cli", "ai", "agent", "skills", "security", "scanner", "lint", "sast"]
-}
-```
-
-### NOT published
-
-| Package | Why |
-|---------|-----|
-| @skvault/web | Deployed to Cloudflare Workers, not a library |
-| skscan-action | Distributed via GitHub Marketplace, not npm |
 
 ---
 
