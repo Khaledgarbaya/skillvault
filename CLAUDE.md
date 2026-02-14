@@ -1,6 +1,6 @@
-# SKVault — Security Scanner for AI Agent Skills
+# skscan — Security Scanner for AI Agent Skills
 
-Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (Node CLI), `packages/scanner` (@skvault/scanner — scanner engine, MIT)
+Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (skscan CLI), `packages/scanner` (@skvault/scanner — scanner engine, MIT)
 
 ## Setup
 
@@ -13,11 +13,37 @@ Monorepo: `apps/web` (TanStack Start on Cloudflare Workers), `apps/cli` (Node CL
 ```
 nvm use               # ALWAYS first — ensure correct Node version
 pnpm build            # scanner → web + cli (scanner must build first)
-pnpm dev              # web dev server (Vite)
+pnpm dev              # web dev server (Vite) at localhost:5690
 pnpm db:generate      # generate Drizzle migrations
 pnpm db:migrate       # apply migrations to local D1
 pnpm --filter @skvault/web exec tsc --noEmit  # typecheck web
 ```
+
+## Architecture Overview
+
+### Scanner Engine (`packages/scanner`)
+
+- Platform-agnostic TypeScript (no Node.js APIs), runs in Node + Cloudflare Workers
+- Entry: `scanSkill(files: SkillFile[], config?: ScanConfig) → ScanResult`
+- 29 rules across 5 categories: secrets, dangerous-code, prompt-override, exfiltration, hidden-instructions
+- Rule IDs: `category/rule-name` format (e.g., `secrets/aws-key`)
+- Built with tsup (ESM + CJS + dts), `type: "module"` → `.js` = ESM, `.cjs` = CJS
+
+### CLI (`apps/cli`)
+
+- `skscan` binary — 3 commands: `scan` (default), `init`, `ci`
+- Built with tsup, bundles `@skvault/scanner` via `noExternal`
+- Commander.js for CLI framework, chalk for colors, yaml for config parsing
+
+### Web (`apps/web`)
+
+- TanStack Start on Cloudflare Workers
+- **Landing page** at `/` — marketing page for skscan
+- **Scan API** at `POST /api/v1/scan` — accepts `{ files, config? }`, returns `ScanResult`
+- **Badge API** at `GET /api/v1/badge/:provider/:owner/:repo` — returns SVG badge
+- Auth pages (login, register, forgot-password, reset-password) — for future cloud dashboard
+- D1 database: auth tables + `scanRecords` table
+- KV: `BADGE_CACHE` for badge caching (5min TTL) and rate limiting (60/hr)
 
 ## Server Functions & Middleware
 
@@ -31,26 +57,22 @@ All server functions use the full middleware chain:
 
 // Scope-restricted operations (token auth)
 .middleware([loggingMiddleware, cloudflareMiddleware, requireScope('publish')])
-.middleware([loggingMiddleware, cloudflareMiddleware, requireScope('read')])
 ```
 
 Never use manual auth checks like `auth.api.getSession()` in handlers — always use middleware.
 
-**Middleware CANNOT call server functions.** They must directly access the environment and fetch session. See `src/lib/middleware/auth.ts` for the correct pattern.
-
 ### Cloudflare Environment Access
 
-Middleware provides typed access to D1, R2, and KV:
+Middleware provides typed access to D1 and KV:
 
 ```typescript
 import { cloudflareMiddleware } from "~/lib/middleware/cloudflare";
 
-// context.cloudflare.env gives you DB, SKILLS_BUCKET, CACHE, and all secrets
+// context.cloudflare.env gives you DB, BADGE_CACHE, and all secrets
 const db = drizzle(context.cloudflare.env.DB);
-const auth = createAuth(context.cloudflare.env);
 ```
 
-**NEVER import `cloudflare:workers` or `auth/server` at the top level of files that TanStack Start bundles for the client.** Use the `createAuth(env)` factory with runtime env from middleware context instead. See [Authentication](.claude/docs/auth.md) for details.
+**NEVER import `cloudflare:workers` or `auth/server` at the top level of files that TanStack Start bundles for the client.** Use the `createAuth(env)` factory with runtime env from middleware context instead.
 
 ### Typed Context
 
@@ -58,62 +80,24 @@ Use `LoggedAuthContext` from `src/lib/middleware/types.ts`:
 
 ```typescript
 import type { LoggedAuthContext } from "~/lib/middleware/types";
-
-export const myFn = createServerFn({ method: "POST" })
-  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
-  .handler(async ({ context }: { context: LoggedAuthContext; data: MyData }) => {
-    // context.cloudflare.env — typed with all bindings (DB, SKILLS_BUCKET, CACHE)
-    // context.session.user — typed with user fields
-    // context.logger — typed logger instance
-  });
 ```
 
-`CloudflareEnv` is the single source of truth for all bindings and secrets, defined in `src/lib/middleware/types.ts`.
+`CloudflareEnv` is the single source of truth for all bindings: `DB` (D1), `BADGE_CACHE` (KV), and secrets (`AUTH_SECRET`, `RESEND_API_KEY`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`).
 
-### Client Hook Pattern
+### API Route Handlers
 
-Queries go in `src/lib/queries/use*.ts`, server functions in `src/lib/queries/server/*.ts`:
-
-```typescript
-// Client hook
-export function useSkills() {
-  return useQuery({
-    queryKey: ['skills'],
-    queryFn: () => getSkillsFn(),
-  });
-}
-
-// Server function
-export const getSkillsFn = createServerFn({ method: 'GET' })
-  .middleware([loggingMiddleware, cloudflareMiddleware, authMiddleware])
-  .handler(async ({ context }) => {
-    const db = drizzle(context.cloudflare.env.DB);
-    return db.select().from(skills).where(eq(skills.ownerId, context.session.user.id));
-  });
-```
-
-Toast notifications: `sonner` with `toast.success()` / `toast.error()` (hardcode `theme="dark"`).
-
-### Access Control
-
-**Server functions** use middleware — `authMiddleware` or `requireScope('...')` (see middleware chain above).
-
-**API route handlers** (`server.handlers`) use inline helpers from `src/lib/middleware/auth.ts`:
+Server route handlers (`server.handlers`) use inline helpers for auth:
 
 ```typescript
-import { requireScopeFromRequest, optionalScopeFromRequest } from "~/lib/middleware";
-
-// These get env from cloudflare:workers internally (server-only context)
+import { requireScopeFromRequest } from "~/lib/middleware";
 const authResult = await requireScopeFromRequest(request, "publish");
 ```
 
-For direct auth operations in route handlers, use the `createAuth` factory:
+For direct auth operations:
 
 ```typescript
 import { createAuth } from "~/lib/auth/server";
-
 const auth = createAuth(context.cloudflare.env);
-const session = await auth.api.getSession({ headers: request.headers });
 ```
 
 ## Domain References
