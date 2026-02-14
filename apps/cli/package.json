@@ -1,6 +1,6 @@
 {
   "name": "skscan",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Security scanner for AI agent skills — detect secrets, prompt injections, and dangerous code",
   "type": "module",
   "license": "MIT",
