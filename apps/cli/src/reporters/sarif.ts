@@ -60,7 +60,7 @@ export function reportSarif(result: ScanResult): string {
           driver: {
             name: "skscan",
             version: result.engineVersion,
-            informationUri: "https://github.com/anthropics/skillvault",
+            informationUri: "https://github.com/Khaledgarbaya/skillvault",
             rules: RULES,
           },
         },
