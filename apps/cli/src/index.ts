@@ -1,38 +1,21 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { registerLogin } from "./commands/login.js";
-import { registerLogout } from "./commands/logout.js";
+import { registerScan } from "./commands/scan.js";
 import { registerInit } from "./commands/init.js";
-import { registerPublish } from "./commands/publish.js";
-import { registerAdd } from "./commands/add.js";
-import { registerInstall } from "./commands/install.js";
-import { registerUpdate } from "./commands/update.js";
-import { registerRollback } from "./commands/rollback.js";
-import { registerSearch } from "./commands/search.js";
-import { registerDiff } from "./commands/diff.js";
-import { registerToken } from "./commands/token.js";
+import { registerCi } from "./commands/ci.js";
 
 const program = new Command();
 
 program
-  .name("sk")
+  .name("skscan")
   .version("0.1.0")
-  .description("SKVault — Skill registry for AI agents");
+  .description("Security scanner for AI agent skills");
 
-// Register all commands
-registerLogin(program);
-registerLogout(program);
+// scan is the default command (argument on program itself)
+registerScan(program);
 registerInit(program);
-registerPublish(program);
-registerAdd(program);
-registerInstall(program);
-registerUpdate(program);
-registerRollback(program);
-registerSearch(program);
-registerDiff(program);
-registerToken(program);
+registerCi(program);
 
-// Global error handler
 program.exitOverride();
 
 try {
@@ -40,7 +23,6 @@ try {
 } catch (err: unknown) {
   if (err instanceof Error && "code" in err) {
     const code = (err as { code: string }).code;
-    // commander exits cleanly for --help and --version
     if (code === "commander.helpDisplayed" || code === "commander.version") {
       process.exit(0);
     }

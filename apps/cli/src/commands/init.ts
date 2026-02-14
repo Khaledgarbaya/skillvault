@@ -1,51 +1,30 @@
 import type { Command } from "commander";
-import chalk from "chalk";
-import { existsSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { stringify as stringifyYaml } from "yaml";
+import chalk from "chalk";
 
-const SKILLFILE_NAME = "skillfile.yaml";
+const DEFAULT_CONFIG = {
+  $schema: "https://skvault.dev/schemas/skscanrc.json",
+  rules: {},
+  ignore: ["node_modules/**", "dist/**", ".git/**"],
+};
 
 export function registerInit(program: Command): void {
   program
     .command("init")
-    .description("Initialize a skill project or skill dependencies")
-    .action(() => {
-      const cwd = process.cwd();
-      const skillfilePath = join(cwd, SKILLFILE_NAME);
+    .description("Create a .skscanrc.json config file")
+    .option("--force", "overwrite existing config file")
+    .action((opts: { force?: boolean }) => {
+      const target = join(process.cwd(), ".skscanrc.json");
 
-      if (existsSync(skillfilePath)) {
-        console.log(chalk.dim(`${SKILLFILE_NAME} already exists.`));
-        return;
-      }
-
-      const content = stringifyYaml({
-        skills: {},
-      });
-
-      writeFileSync(skillfilePath, content);
-      console.log(chalk.green(`Created ${SKILLFILE_NAME}`));
-
-      // Update .gitignore
-      const gitignorePath = join(cwd, ".gitignore");
-      const entries = [".skills/store/", "skillfile.lock"];
-
-      if (existsSync(gitignorePath)) {
-        const existing = readFileSync(gitignorePath, "utf-8");
-        const missing = entries.filter((e) => !existing.includes(e));
-        if (missing.length > 0) {
-          appendFileSync(
-            gitignorePath,
-            "\n# SKVault\n" + missing.join("\n") + "\n",
-          );
-          console.log(chalk.green("Updated .gitignore"));
-        }
-      } else {
-        writeFileSync(
-          gitignorePath,
-          "# SKVault\n" + entries.join("\n") + "\n",
+      if (existsSync(target) && !opts.force) {
+        console.error(
+          chalk.yellow(".skscanrc.json already exists. Use --force to overwrite."),
         );
-        console.log(chalk.green("Created .gitignore"));
+        process.exit(1);
       }
+
+      writeFileSync(target, JSON.stringify(DEFAULT_CONFIG, null, 2) + "\n");
+      console.log(chalk.green("Created .skscanrc.json"));
     });
 }

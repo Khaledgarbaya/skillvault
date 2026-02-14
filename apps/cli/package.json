@@ -1,25 +1,41 @@
 {
-  "name": "skvault",
+  "name": "skscan",
   "version": "0.1.0",
+  "description": "Security scanner for AI agent skills — detect secrets, prompt injections, and dangerous code",
   "type": "module",
+  "license": "MIT",
   "bin": {
-    "sk": "./dist/index.js"
+    "skscan": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "security",
+    "scanner",
+    "ai",
+    "agent",
+    "skills",
+    "mcp",
+    "sast"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/skillvault",
+    "directory": "apps/cli"
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@skvault/shared": "workspace:*",
+    "@skvault/scanner": "workspace:*",
     "chalk": "^5.6.2",
     "commander": "^14.0.3",
-    "ora": "^9.3.0",
-    "tar-stream": "^3.1.7",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",
-    "@types/tar-stream": "^3.1.4",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3"
   }

@@ -1,80 +1,83 @@
-import { homedir } from "node:os";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
+import type { ScanConfig } from "@skvault/scanner";
 
-export interface Config {
-  token?: string;
-  registry: string;
-  username?: string;
-}
+const CONFIG_FILES = [
+  ".skscanrc.json",
+  ".skscanrc.yml",
+  ".skscanrc.yaml",
+];
 
-const DEFAULT_CONFIG: Config = {
-  registry: "https://skv.sh",
-};
-
-/**
- * Resolve the config directory following XDG Base Directory spec.
- * Primary: $XDG_CONFIG_HOME/skv/ (defaults to ~/.config/skv/)
- */
-export function getConfigDir(): string {
-  const xdg = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
-  const dir = join(xdg, "skv");
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
+export function loadConfig(dir: string, configPath?: string): ScanConfig {
+  if (configPath) {
+    return readConfigFile(configPath);
   }
-  return dir;
-}
 
-function getConfigPath(): string {
-  return join(getConfigDir(), "config.json");
-}
+  // Check well-known config files
+  for (const name of CONFIG_FILES) {
+    const full = join(dir, name);
+    if (existsSync(full)) return readConfigFile(full);
+  }
 
-function getLegacyConfigPath(): string {
-  return join(homedir(), ".skvrc");
-}
-
-export function getConfig(): Config {
-  const configPath = getConfigPath();
-
-  // Try XDG path first
-  if (existsSync(configPath)) {
+  // Check package.json "skscan" key
+  const pkgPath = join(dir, "package.json");
+  if (existsSync(pkgPath)) {
     try {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(readFileSync(configPath, "utf-8")) };
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      if (pkg.skscan) return normalizeConfig(pkg.skscan);
     } catch {
-      return { ...DEFAULT_CONFIG };
+      // ignore malformed package.json
     }
   }
 
-  // Fallback: read legacy ~/.skvrc (read-only — new writes go to .config/skv/)
-  const legacyPath = getLegacyConfigPath();
-  if (existsSync(legacyPath)) {
-    try {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(readFileSync(legacyPath, "utf-8")) };
-    } catch {
-      return { ...DEFAULT_CONFIG };
-    }
+  // Check .config/skscan.json
+  const dotConfig = join(dir, ".config", "skscan.json");
+  if (existsSync(dotConfig)) return readConfigFile(dotConfig);
+
+  return {};
+}
+
+export function mergeCliFlags(
+  config: ScanConfig,
+  ignoreRules?: string,
+): ScanConfig {
+  if (!ignoreRules) return config;
+
+  const rules = { ...config.rules };
+  for (const id of ignoreRules.split(",")) {
+    const trimmed = id.trim();
+    if (trimmed) rules[trimmed] = "off";
   }
 
-  return { ...DEFAULT_CONFIG };
+  return { ...config, rules };
 }
 
-export function setConfig(partial: Partial<Config>): void {
-  const current = getConfig();
-  const merged = { ...current, ...partial };
-  writeFileSync(getConfigPath(), JSON.stringify(merged, null, 2) + "\n");
+function readConfigFile(path: string): ScanConfig {
+  const raw = readFileSync(path, "utf-8");
+
+  if (path.endsWith(".yml") || path.endsWith(".yaml")) {
+    return normalizeConfig(parseYaml(raw) ?? {});
+  }
+
+  const parsed = JSON.parse(raw);
+  // Strip $schema key
+  const { $schema: _, ...rest } = parsed;
+  return normalizeConfig(rest);
 }
 
-export function getToken(): string | undefined {
-  return getConfig().token;
-}
+function normalizeConfig(raw: Record<string, unknown>): ScanConfig {
+  const config: ScanConfig = {};
 
-export function setToken(token: string): void {
-  setConfig({ token });
-}
+  if (raw.rules && typeof raw.rules === "object") {
+    config.rules = raw.rules as Record<string, "off" | "warn" | "error">;
+  }
 
-export function clearToken(): void {
-  const config = getConfig();
-  delete config.token;
-  delete config.username;
-  writeFileSync(getConfigPath(), JSON.stringify(config, null, 2) + "\n");
+  if (Array.isArray(raw.ignore)) {
+    config.ignore = raw.ignore.filter(
+      (x): x is string => typeof x === "string",
+    );
+  }
+
+  return config;
 }
