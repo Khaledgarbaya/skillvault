@@ -146,17 +146,7 @@
   text-shadow: 0 0 30px oklch(0.72 0.19 142.5 / 30%);
 }
 
-/* ── Terminal animation ── */
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink-caret {
-  from, to { border-color: transparent; }
-  50% { border-color: oklch(0.72 0.19 142.5); }
-}
-
+/* ── Keyframes ── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -167,36 +157,34 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
-.terminal-line {
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid transparent;
-  width: 0;
-  animation:
-    typing 1.2s steps(20, end) 0.5s forwards,
-    blink-caret 0.8s step-end 0.5s 2 forwards;
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-.terminal-line-2 {
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid transparent;
-  width: 0;
-  animation:
-    typing 1.6s steps(30, end) 2.5s forwards,
-    blink-caret 0.8s step-end 2.5s infinite;
+@keyframes scan-sweep {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
+@keyframes reveal-line {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scroll-reveal {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Hero animations ── */
 .animate-slide-up {
   animation: slideUp 0.6s ease-out both;
 }
@@ -206,6 +194,78 @@
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
+
+/* ── Terminal scan lines ── */
+.term-line {
+  opacity: 0;
+  animation: reveal-line 0.3s ease-out forwards;
+}
+
+/* ── CRT scanline overlay ── */
+.crt-lines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    oklch(0 0 0 / 3%) 2px,
+    oklch(0 0 0 / 3%) 4px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Scan sweep effect ── */
+.scan-sweep::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, oklch(0.72 0.19 142.5 / 60%), transparent);
+  box-shadow: 0 0 12px oklch(0.72 0.19 142.5 / 30%);
+  animation: scan-sweep 3s ease-in-out 1.5s forwards;
+  z-index: 2;
+  opacity: 0;
+}
+
+/* ── Blinking cursor ── */
+.cursor-blink::after {
+  content: "▋";
+  color: oklch(0.72 0.19 142.5);
+  animation: blink-cursor 1s step-end infinite;
+}
+
+/* ── Scroll reveal ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+}
+
+.scroll-reveal.is-visible {
+  animation: scroll-reveal 0.6s ease-out forwards;
+}
+
+/* ── Hex grid background ── */
+.hex-grid {
+  background-image:
+    linear-gradient(30deg, oklch(1 0 0 / 3%) 12%, transparent 12.5%, transparent 87%, oklch(1 0 0 / 3%) 87.5%, oklch(1 0 0 / 3%)),
+    linear-gradient(150deg, oklch(1 0 0 / 3%) 12%, transparent 12.5%, transparent 87%, oklch(1 0 0 / 3%) 87.5%, oklch(1 0 0 / 3%)),
+    linear-gradient(30deg, oklch(1 0 0 / 3%) 12%, transparent 12.5%, transparent 87%, oklch(1 0 0 / 3%) 87.5%, oklch(1 0 0 / 3%)),
+    linear-gradient(150deg, oklch(1 0 0 / 3%) 12%, transparent 12.5%, transparent 87%, oklch(1 0 0 / 3%) 87.5%, oklch(1 0 0 / 3%)),
+    linear-gradient(60deg, oklch(1 0 0 / 2%) 25%, transparent 25.5%, transparent 75%, oklch(1 0 0 / 2%) 75%, oklch(1 0 0 / 2%)),
+    linear-gradient(60deg, oklch(1 0 0 / 2%) 25%, transparent 25.5%, transparent 75%, oklch(1 0 0 / 2%) 75%, oklch(1 0 0 / 2%));
+  background-size: 40px 70px;
+  background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+}
+
+/* ── Severity colors ── */
+.severity-critical { color: oklch(0.704 0.191 22.216); }
+.severity-high { color: oklch(0.704 0.191 22.216); }
+.severity-medium { color: oklch(0.795 0.184 86.047); }
+.severity-low { color: oklch(0.556 0.01 286.067); }
 
 /* ── Noise texture overlay ── */
 .noise::before {
