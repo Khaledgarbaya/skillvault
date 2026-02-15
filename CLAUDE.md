@@ -100,6 +100,16 @@ import { createAuth } from "~/lib/auth/server";
 const auth = createAuth(context.cloudflare.env);
 ```
 
+## Open-Source & Secret Safety
+
+This project is **fully open-source**. Every file, every commit, every piece of git history is public. Treat all code as if it's already on the front page of Hacker News.
+
+- **Never hardcode secrets, API keys, tokens, or credentials** in tracked files. Use `.dev.vars` (local) or Cloudflare secrets (production) for anything sensitive.
+- **`VITE_PUBLIC_*` vars are intentionally public** (write-only client keys like PostHog). Everything else stays out of git.
+- **Run `gitleaks detect --verbose` before staging and committing.** If gitleaks flags something, stop and evaluate before adding it to history — git history is permanent.
+- **`.gitleaksignore`** allowlists scanner test fixture fingerprints (dummy secrets used in tests). Update it if new test fixtures trigger false positives.
+- **Never commit** `.dev.vars`, `.env`, credentials, private keys, or OAuth secrets. Verify `.gitignore` covers new secret files.
+
 ## Domain References
 
 When working in a specific area, read the relevant doc for conventions:
