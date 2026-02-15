@@ -19,3 +19,5 @@ custom_domain = true
 
 [vars]
 APP_URL = "https://skvault.dev"
+VITE_PUBLIC_POSTHOG_KEY = "phc_aGJSTvy8Oac02BzFuUjYfjiue3HJ2uzT5bDBuXBg2Hi"
+VITE_PUBLIC_POSTHOG_HOST = "https://us.i.posthog.com"

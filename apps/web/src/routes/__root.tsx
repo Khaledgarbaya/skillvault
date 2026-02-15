@@ -8,6 +8,7 @@ import appCss from "../styles/app.css?url";
 import { SiteHeader } from "~/components/site-header";
 import { SiteFooter } from "~/components/site-footer";
 import { Toaster } from "~/components/ui/sonner";
+import { PostHogProvider } from "~/components/posthog-provider";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -77,12 +78,14 @@ function RootLayout() {
         <HeadContent />
       </head>
       <body className="flex min-h-screen flex-col font-sans">
-        <SiteHeader />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <SiteFooter />
-        <Toaster />
+        <PostHogProvider>
+          <SiteHeader />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <SiteFooter />
+          <Toaster />
+        </PostHogProvider>
         <Scripts />
       </body>
     </html>

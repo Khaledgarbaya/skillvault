@@ -1,0 +1,11 @@
+# Scanner test fixtures — dummy secrets used to test detection rules
+eedbdc395d244786864723fbe0078c36e33e790c:packages/scanner/src/__tests__/secrets.test.ts:stripe-access-token:52
+eedbdc395d244786864723fbe0078c36e33e790c:packages/scanner/src/__tests__/secrets.test.ts:generic-api-key:59
+eedbdc395d244786864723fbe0078c36e33e790c:packages/scanner/src/__tests__/secrets.test.ts:private-key:75
+eedbdc395d244786864723fbe0078c36e33e790c:packages/scanner/src/__tests__/secrets.test.ts:generic-api-key:98
+eedbdc395d244786864723fbe0078c36e33e790c:packages/scanner/src/__tests__/secrets.test.ts:generic-api-key:105
+
+# Legacy shared package test fixtures (removed, but still in git history)
+6fe0127c4de827af1f290dfed8cfe08fef369a9f:packages/shared/src/scanner/__tests__/scanner.test.ts:slack-bot-token:108
+6fe0127c4de827af1f290dfed8cfe08fef369a9f:packages/shared/src/scanner/__tests__/scanner.test.ts:stripe-access-token:121
+6fe0127c4de827af1f290dfed8cfe08fef369a9f:packages/shared/src/scanner/__tests__/scanner.test.ts:generic-api-key:150
