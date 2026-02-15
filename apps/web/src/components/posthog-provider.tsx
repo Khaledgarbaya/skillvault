@@ -14,6 +14,7 @@ function PostHogProvider({ children }: { children: React.ReactNode }) {
         api_host: host,
         capture_pageview: true,
         capture_pageleave: true,
+        capture_performance: { web_vitals: true },
       });
       setIsReady(true);
     }
